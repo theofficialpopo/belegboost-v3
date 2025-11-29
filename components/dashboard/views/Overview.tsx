@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Download, Search, Filter, X } from 'lucide-react';
 import Button from '../../ui/Button';
 import { SUBMISSIONS } from '../../../lib/data';
@@ -6,12 +6,22 @@ import { Submission, SubmissionStatus } from '../../../types';
 import SubmissionDetailModal from '../modals/SubmissionDetailModal';
 import OverviewHeader from '../overview/OverviewHeader';
 import SubmissionRow from '../overview/SubmissionRow';
+import SubmissionRowSkeleton from '../skeletons/SubmissionRowSkeleton';
 import { useDashboardFilter } from '../../../hooks';
 
 const Overview: React.FC = () => {
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate initial data loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Use custom filter hook with Generics for strict type safety
   const { 
@@ -123,7 +133,12 @@ const Overview: React.FC = () => {
 
       {/* Submission List */}
       <div className="space-y-2">
-        {filteredItems.length === 0 ? (
+        {isLoading ? (
+            // Skeleton Loader
+            Array.from({ length: 5 }).map((_, i) => (
+                <SubmissionRowSkeleton key={i} gridClass={gridLayoutClass} />
+            ))
+        ) : filteredItems.length === 0 ? (
             <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
                 <p className="text-slate-500">Keine Einträge gefunden.</p>
                 {(searchQuery || filters.status !== 'all') && (

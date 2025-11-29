@@ -1,16 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, X, Filter } from 'lucide-react';
 import Button from '../../ui/Button';
 import { TEAM_MEMBERS } from '../../../lib/data';
 import { TeamMember, TeamRole } from '../../../types';
 import TeamEditModal from '../modals/TeamEditModal';
 import TeamMemberCard from '../team/TeamMemberCard';
+import TeamMemberCardSkeleton from '../skeletons/TeamMemberCardSkeleton';
 import { useDashboardFilter } from '../../../hooks';
 
 const Team: React.FC = () => {
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate initial data loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        setIsLoading(false);
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, []);
   
   const { 
     searchQuery, 
@@ -150,31 +160,37 @@ const Team: React.FC = () => {
 
       {/* Grid List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredItems.map((member) => (
-            <TeamMemberCard 
-                key={member.id} 
-                member={member} 
-                onEdit={handleEdit} 
-            />
-        ))}
-        
-        {/* Empty State */}
-        {filteredItems.length === 0 && (
+        {isLoading ? (
+            // Skeletons
+            Array.from({ length: 3 }).map((_, i) => (
+                <TeamMemberCardSkeleton key={i} />
+            ))
+        ) : filteredItems.length > 0 ? (
+            filteredItems.map((member) => (
+                <TeamMemberCard 
+                    key={member.id} 
+                    member={member} 
+                    onEdit={handleEdit} 
+                />
+            ))
+        ) : (
              <div className="col-span-full text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
                  <p className="text-slate-500">Keine Mitarbeiter gefunden.</p>
                  <button onClick={resetFilters} className="text-primary-600 text-sm hover:underline mt-2">Suche zurücksetzen</button>
              </div>
         )}
 
-        <button 
-            onClick={handleNew}
-            className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-slate-400 hover:border-primary-400 hover:text-primary-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all min-h-[250px]"
-        >
-            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-                <Plus size={24} />
-            </div>
-            <span className="font-bold">Neuen Benutzer einladen</span>
-        </button>
+        {!isLoading && (
+            <button 
+                onClick={handleNew}
+                className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-6 flex flex-col items-center justify-center text-slate-400 hover:border-primary-400 hover:text-primary-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-all min-h-[250px]"
+            >
+                <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
+                    <Plus size={24} />
+                </div>
+                <span className="font-bold">Neuen Benutzer einladen</span>
+            </button>
+        )}
       </div>
     </div>
   );
