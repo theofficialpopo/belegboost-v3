@@ -43,7 +43,8 @@ const Overview: React.FC = () => {
 
   // Fixed Grid Layout using fr units
   // Client (3fr) | Advisor (1.5fr) | Period (1.2fr - Reduced) | Balance (1.2fr) | Time (1.3fr) | Actions (2fr)
-  const gridLayoutClass = "grid grid-cols-[3fr_1.5fr_1.2fr_1.2fr_1.3fr_2fr] gap-4 items-center px-4";
+  // This ensures perfect alignment regardless of gap size
+  const gridLayoutClass = "grid grid-cols-[3fr_1.5fr_1fr_1.2fr_1.2fr_2fr] gap-4 items-center px-4";
 
   return (
     <div className="animate-in slide-in-from-bottom-4 fade-in duration-500">

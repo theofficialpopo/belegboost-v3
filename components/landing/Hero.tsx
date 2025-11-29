@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowRight, Check } from 'lucide-react';
 import Button from '../ui/Button';
-import HeroMockup from '../v5/ui/HeroMockup'; // Reusing mockup for now
+import HeroMockup from './ui/HeroMockup'; 
 
 interface HeroProps {
   onNavigate?: (page: 'landing' | 'signin' | 'signup') => void;

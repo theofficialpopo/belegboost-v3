@@ -54,27 +54,38 @@ export const getSafeDateStrings = (year: number, monthIndex: number) => {
 };
 
 export const formatDisplayPeriod = (periodStr: string) => {
-    // Input formats expected: "01.09.2025 - 30.09.2025" or "Q3 2025" or "15.10.2025 - 20.10.2025"
+    // Expected formats: "YYYY-MM-DD - YYYY-MM-DD" or "01.09.2025 - 30.09.2025"
     if (!periodStr.includes(' - ')) return periodStr;
 
-    const [start, end] = periodStr.split(' - ');
+    // Detect format (ISO vs DE)
+    const isISO = periodStr.includes('-'); // YYYY-MM-DD has dashes
+    // Check if input is already formatted like "01.09.2025"
+    const hasDots = periodStr.includes('.');
+
+    let start, end;
+    if (hasDots) {
+        [start, end] = periodStr.split(' - ');
+    } else {
+        // Assume Q3 2025 etc
+        return periodStr;
+    }
+
     const parts1 = start.split('.');
     const parts2 = end.split('.');
 
-    // Fallback if format is unexpected
     if (parts1.length !== 3 || parts2.length !== 3) return periodStr;
 
     const [d1, m1, y1] = parts1;
     const [d2, m2, y2] = parts2;
 
-    // Logic: Compact Month.Year - Month.Year
+    // Logic: Compact Month.Year
     
-    // Case 1: Same Month & Year (e.g. 01.09.2025 - 30.09.2025) -> "09.2025"
+    // Case 1: Same Month & Year -> "09.2025"
     if (m1 === m2 && y1 === y2) {
         return `${m1}.${y1}`;
     }
     
-    // Case 2: Range across months, same year (e.g. 01.08.2025 - 30.09.2025) -> "08. - 09.2025"
+    // Case 2: Range across months, same year -> "08. - 09.2025"
     if (y1 === y2) {
        return `${m1}. - ${m2}.${y1}`;
     }
