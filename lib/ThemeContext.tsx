@@ -1,5 +1,5 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useLocalStorage } from './hooks';
 
 type Theme = 'emerald' | 'ocean' | 'violet';
 type Mode = 'light' | 'dark' | 'system';
@@ -14,8 +14,8 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>('emerald');
-  const [mode, setMode] = useState<Mode>('system');
+  const [theme, setTheme] = useLocalStorage<Theme>('belegboost-theme', 'emerald');
+  const [mode, setMode] = useLocalStorage<Mode>('belegboost-mode', 'system');
 
   // Handle Color Theme
   useEffect(() => {

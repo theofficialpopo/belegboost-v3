@@ -1,5 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 
+// --- Landing Page Types ---
 export interface NavItem {
   label: string;
   href: string;
@@ -31,8 +32,7 @@ export interface FooterSection {
   links: FooterLink[];
 }
 
-// Portal Types
-
+// --- Portal Types ---
 export interface PortalFormData {
   // Step 1: Identity
   companyName: string;
@@ -51,4 +51,43 @@ export interface PortalFormData {
 
   // Step 4: Advisor
   selectedAdvisor: string;
+}
+
+export interface Provider {
+  name: string;
+  logo: string;
+  type: string;
+}
+
+export interface Advisor {
+  name: string;
+  role: string;
+  initials: string;
+}
+
+// --- Dashboard Types ---
+export interface Submission {
+  id: string;
+  clientName: string;
+  clientNumber: string;
+  provider: string;
+  providerLogo: string; // Initials or short code
+  period: string;
+  receivedAt: string;
+  transactionCount: number;
+  status: 'new' | 'exported' | 'review';
+  endBalance: string;
+  assignedAdvisor: string; // The advisor selected by the client
+  datevAccount?: string; // The DATEV account number (e.g. 1200) entered by advisor
+}
+
+export interface TeamMember {
+  id: string;
+  name: string;
+  jobTitle: string; // e.g. "Steuerfachwirtin"
+  role: 'owner' | 'admin' | 'member'; // System permission level
+  email: string;
+  avatar: string;
+  status: 'active' | 'invited';
+  isPubliclyVisible: boolean; // Determines if they appear in the portal
 }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UploadCloud, FileSpreadsheet, File as FileIcon, CreditCard, Search, CheckCircle2 } from 'lucide-react';
 import { PortalFormData } from '../../../types';
-import { PROVIDERS } from '../../../lib/portal-data';
+import { PROVIDERS } from '../../../lib/data';
 import StepHeader from '../ui/StepHeader';
 
 interface SmartUploadStepProps {

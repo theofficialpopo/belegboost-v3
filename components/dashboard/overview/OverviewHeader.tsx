@@ -1,4 +1,3 @@
-
 import React from 'react';
 
 const OverviewHeader: React.FC<{ gridClass: string }> = ({ gridClass }) => {

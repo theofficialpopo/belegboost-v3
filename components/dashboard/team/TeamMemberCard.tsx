@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Mail, Shield, Eye, EyeOff, Crown, ShieldAlert, User } from 'lucide-react';
 import Button from '../../ui/Button';
-import { TeamMember } from '../../../lib/dashboard-data';
+import { TeamMember } from '../../../types';
 
 interface TeamMemberCardProps {
   member: TeamMember;

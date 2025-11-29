@@ -1,73 +1,29 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import PortalLayout from './PortalLayout';
 import Button from '../ui/Button';
 import { ArrowLeft, ArrowRight, CheckCircle2, Upload } from 'lucide-react';
-import { PortalFormData } from '../../types';
 import IdentityStep from './steps/IdentityStep';
 import SmartUploadStep from './steps/SmartUploadStep';
 import PeriodBalanceStep from './steps/PeriodBalanceStep';
 import AdvisorFinalizeStep from './steps/AdvisorFinalizeStep';
+import { usePortalForm } from '../../lib/hooks';
 
 interface AdvisorPortalProps {
   onNavigate: (page: 'landing') => void;
 }
 
 const AdvisorPortal: React.FC<AdvisorPortalProps> = ({ onNavigate }) => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [formData, setFormData] = useState<PortalFormData>({
-    companyName: '',
-    clientNumber: '',
-    email: '',
-    dataFile: null,
-    pdfFile: null,
-    provider: '',
-    selectedAdvisor: '',
-    startDate: '',
-    endDate: '',
-    endBalance: '',
-  });
-
-  // Updated to 4 Steps
-  const totalSteps = 4;
-
-  const updateData = (data: Partial<PortalFormData>) => {
-    setFormData(prev => ({ ...prev, ...data }));
-  };
-
-  const handleNext = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(prev => prev + 1);
-    } else {
-      handleSubmit();
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(prev => prev - 1);
-    } else {
-      onNavigate('landing');
-    }
-  };
-
-  const handleSubmit = () => {
-    // TODO: Backend upload logic
-    console.log("Submitting Portal Data:", formData);
-    setIsSuccess(true);
-  };
-
-  // Validation logic
-  const canProceed = () => {
-    switch (currentStep) {
-      case 1: return !!formData.companyName && !!formData.email; // Identity
-      case 2: return !!formData.dataFile && !!formData.provider; // Upload & Source
-      case 3: return !!formData.startDate && !!formData.endDate && !!formData.endBalance; // Period & Mandatory Balance
-      case 4: return !!formData.selectedAdvisor; // Advisor Finalize
-      default: return false;
-    }
-  };
+  const { 
+    currentStep, 
+    totalSteps, 
+    formData, 
+    updateData, 
+    nextStep, 
+    prevStep, 
+    isSuccess, 
+    restart, 
+    canProceed 
+  } = usePortalForm();
 
   const getStepTitle = (step: number) => {
       switch(step) {
@@ -78,23 +34,6 @@ const AdvisorPortal: React.FC<AdvisorPortalProps> = ({ onNavigate }) => {
           default: return '';
       }
   }
-
-  const handleRestart = () => {
-      setIsSuccess(false);
-      // Restart at Step 1, but keep identity data (Company, Email, ClientNum)
-      setCurrentStep(1); 
-      setFormData(prev => ({ 
-          ...prev, 
-          // Reset transaction specific data
-          dataFile: null, 
-          pdfFile: null, 
-          provider: '', 
-          endBalance: '', 
-          startDate: '', 
-          endDate: '', 
-          selectedAdvisor: '' 
-      }));
-  };
 
   if (isSuccess) {
     return (
@@ -109,7 +48,7 @@ const AdvisorPortal: React.FC<AdvisorPortalProps> = ({ onNavigate }) => {
              Wir haben eine Bestätigung an {formData.email} gesendet.
            </p>
            <div className="flex justify-center gap-4">
-               <Button onClick={handleRestart} variant="outline">
+               <Button onClick={restart} variant="outline">
                  Weitere Datei hochladen
                </Button>
                <Button onClick={() => onNavigate('landing')} variant="primary">
@@ -146,17 +85,17 @@ const AdvisorPortal: React.FC<AdvisorPortalProps> = ({ onNavigate }) => {
         
         {/* Step Content */}
         <div className="flex-grow">
-            {currentStep === 1 && <IdentityStep data={formData} updateData={updateData} onNext={handleNext} />}
-            {currentStep === 2 && <SmartUploadStep data={formData} updateData={updateData} onFinish={handleNext} />}
-            {currentStep === 3 && <PeriodBalanceStep data={formData} updateData={updateData} onNext={handleNext} />}
-            {currentStep === 4 && <AdvisorFinalizeStep data={formData} updateData={updateData} onFinish={handleSubmit} />}
+            {currentStep === 1 && <IdentityStep data={formData} updateData={updateData} onNext={nextStep} />}
+            {currentStep === 2 && <SmartUploadStep data={formData} updateData={updateData} onFinish={nextStep} />}
+            {currentStep === 3 && <PeriodBalanceStep data={formData} updateData={updateData} onNext={nextStep} />}
+            {currentStep === 4 && <AdvisorFinalizeStep data={formData} updateData={updateData} onFinish={nextStep} />}
         </div>
 
         {/* Navigation Actions */}
         <div className="mt-8 flex justify-between items-center pt-8 border-t border-slate-100 dark:border-slate-800">
             {currentStep > 1 && (
                 <button 
-                    onClick={handleBack}
+                    onClick={() => prevStep(() => onNavigate('landing'))}
                     className="flex items-center text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white font-medium transition-colors"
                 >
                     <ArrowLeft size={18} className="mr-2" />
@@ -168,7 +107,7 @@ const AdvisorPortal: React.FC<AdvisorPortalProps> = ({ onNavigate }) => {
             {currentStep === 1 && <div></div>}
             
             <Button 
-                onClick={handleNext} 
+                onClick={nextStep} 
                 disabled={!canProceed()}
                 className={`rounded-full px-8 transition-all ${canProceed() ? 'opacity-100 translate-x-0' : 'opacity-50 translate-x-2 cursor-not-allowed'}`}
             >

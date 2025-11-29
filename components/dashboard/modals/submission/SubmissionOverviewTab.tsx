@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Calendar, Hash, Download } from 'lucide-react';
 import IconInput from '../../../ui/IconInput';
 import Button from '../../../ui/Button';
-import { Submission, getAdvisorById } from '../../../../lib/dashboard-data';
+import { Submission } from '../../../../types';
+import { getAdvisorById } from '../../../../lib/data';
 
 interface SubmissionOverviewTabProps {
   submission: Submission;
@@ -37,7 +37,7 @@ const SubmissionOverviewTab: React.FC<SubmissionOverviewTabProps> = ({ submissio
             </div>
         </div>
 
-        {/* DATEV Account Input - Crucial Action */}
+        {/* DATEV Account Input */}
         <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
             <h5 className="font-bold text-slate-900 dark:text-white mb-3 flex items-center gap-2">
                 <Hash size={16} className="text-primary-500" />
@@ -60,7 +60,7 @@ const SubmissionOverviewTab: React.FC<SubmissionOverviewTabProps> = ({ submissio
             </p>
         </div>
 
-        {/* File Preview (Mock) */}
+        {/* File Preview */}
         <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
             <h5 className="font-bold text-slate-900 dark:text-white mb-3">Dateien</h5>
             <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 flex items-center justify-between group cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">

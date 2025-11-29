@@ -1,40 +1,42 @@
-
 import React, { useState } from 'react';
 import { Plus, Search, X, Filter } from 'lucide-react';
 import Button from '../../ui/Button';
-import { TEAM_MEMBERS, TeamMember } from '../../../lib/dashboard-data';
+import { TEAM_MEMBERS } from '../../../lib/data';
+import { TeamMember } from '../../../types';
 import TeamEditModal from '../modals/TeamEditModal';
 import TeamMemberCard from '../team/TeamMemberCard';
+import { useDashboardFilter } from '../../../lib/hooks';
 
 const Team: React.FC = () => {
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // Search & Filter State
-  const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   
-  // Filters
-  const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'member'>('all');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'invited'>('all');
+  const { 
+    searchQuery, 
+    setSearchQuery, 
+    filters, 
+    updateFilter, 
+    resetFilters,
+    filteredItems 
+  } = useDashboardFilter(
+    TEAM_MEMBERS,
+    (member, search, f) => {
+        const matchesSearch = 
+            member.name.toLowerCase().includes(search.toLowerCase()) ||
+            member.email.toLowerCase().includes(search.toLowerCase()) ||
+            member.jobTitle.toLowerCase().includes(search.toLowerCase());
 
-  const filteredMembers = TEAM_MEMBERS.filter(member => {
-      // 1. Search Logic
-      const matchesSearch = 
-        member.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        member.jobTitle.toLowerCase().includes(searchQuery.toLowerCase());
-
-      // 2. Role Filter Logic
-      const matchesRole = roleFilter === 'all' || 
-                          (roleFilter === 'admin' && (member.role === 'admin' || member.role === 'owner')) ||
-                          (roleFilter === 'member' && member.role === 'member');
-      
-      // 3. Status Filter Logic
-      const matchesStatus = statusFilter === 'all' || member.status === statusFilter;
-      
-      return matchesSearch && matchesRole && matchesStatus;
-  });
+        const matchesRole = f.role === 'all' || 
+                            (f.role === 'admin' && (member.role === 'admin' || member.role === 'owner')) ||
+                            (f.role === 'member' && member.role === 'member');
+        
+        const matchesStatus = f.status === 'all' || member.status === f.status;
+        
+        return matchesSearch && matchesRole && matchesStatus;
+    },
+    { role: 'all', status: 'all' }
+  );
 
   const handleEdit = (member: TeamMember) => {
       setSelectedMember(member);
@@ -100,7 +102,7 @@ const Team: React.FC = () => {
             )}
         </div>
 
-        {/* Filters (Role & Status) */}
+        {/* Filters */}
         {showFilters && (
             <div className="flex flex-wrap items-center gap-4 animate-in slide-in-from-top-2 fade-in duration-200">
                 
@@ -110,9 +112,9 @@ const Team: React.FC = () => {
                     {(['all', 'admin', 'member'] as const).map(role => (
                         <button
                             key={role}
-                            onClick={() => setRoleFilter(role)}
+                            onClick={() => updateFilter('role', role)}
                             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                                roleFilter === role 
+                                filters.role === role 
                                 ? 'bg-primary-600 text-white shadow-md' 
                                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
                             }`}
@@ -130,9 +132,9 @@ const Team: React.FC = () => {
                     {(['all', 'active', 'invited'] as const).map(status => (
                         <button
                             key={status}
-                            onClick={() => setStatusFilter(status)}
+                            onClick={() => updateFilter('status', status)}
                             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                                statusFilter === status 
+                                filters.status === status 
                                 ? 'bg-primary-600 text-white shadow-md' 
                                 : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
                             }`}
@@ -148,7 +150,7 @@ const Team: React.FC = () => {
 
       {/* Grid List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredMembers.map((member) => (
+        {filteredItems.map((member) => (
             <TeamMemberCard 
                 key={member.id} 
                 member={member} 
@@ -157,10 +159,10 @@ const Team: React.FC = () => {
         ))}
         
         {/* Empty State */}
-        {filteredMembers.length === 0 && (
+        {filteredItems.length === 0 && (
              <div className="col-span-full text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
                  <p className="text-slate-500">Keine Mitarbeiter gefunden.</p>
-                 <button onClick={() => { setSearchQuery(''); setRoleFilter('all'); setStatusFilter('all'); }} className="text-primary-600 text-sm hover:underline mt-2">Suche zurücksetzen</button>
+                 <button onClick={resetFilters} className="text-primary-600 text-sm hover:underline mt-2">Suche zurücksetzen</button>
              </div>
         )}
 
