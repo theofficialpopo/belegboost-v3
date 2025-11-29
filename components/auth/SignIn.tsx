@@ -6,6 +6,16 @@ import IconInput from '../ui/IconInput';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../lib/AuthContext';
 import { useToast } from '../../lib/ToastContext';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const signInSchema = z.object({
+  email: z.string().email("Bitte geben Sie eine gültige E-Mail-Adresse ein."),
+  password: z.string().min(1, "Passwort ist erforderlich."),
+});
+
+type SignInFormData = z.infer<typeof signInSchema>;
 
 const SignIn: React.FC = () => {
   const navigate = useNavigate();
@@ -13,16 +23,17 @@ const SignIn: React.FC = () => {
   const { login } = useAuth();
   const { addToast } = useToast();
   
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const { register, handleSubmit, formState: { errors } } = useForm<SignInFormData>({
+    resolver: zodResolver(signInSchema)
+  });
   
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: SignInFormData) => {
     setIsLoading(true);
 
     try {
-        await login(email);
+        await login(data.email);
         addToast({
             type: 'success',
             title: 'Willkommen zurück!',
@@ -49,15 +60,14 @@ const SignIn: React.FC = () => {
         subtitle="Melden Sie sich an, um Ihre Exporte zu verwalten."
         onBack={() => navigate('/')}
     >
-        <form className="space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
             <IconInput
                 label="E-Mail Adresse"
                 icon={Mail}
                 type="email"
                 placeholder="name@kanzlei.de"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                error={errors.email?.message}
+                {...register('email')}
             />
 
             <div>
@@ -75,13 +85,12 @@ const SignIn: React.FC = () => {
                     icon={Lock}
                     type="password"
                     placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
+                    error={errors.password?.message}
+                    {...register('password')}
                 />
             </div>
 
-            <Button fullWidth disabled={isLoading} className="mt-2 rounded-xl py-3 shadow-lg shadow-primary-500/20">
+            <Button type="submit" fullWidth disabled={isLoading} className="mt-2 rounded-xl py-3 shadow-lg shadow-primary-500/20">
                 {isLoading ? <Loader2 className="animate-spin" /> : 'Anmelden'}
             </Button>
         </form>
