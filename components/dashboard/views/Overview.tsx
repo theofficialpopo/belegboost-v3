@@ -8,12 +8,14 @@ import OverviewHeader from '../overview/OverviewHeader';
 import SubmissionRow from '../overview/SubmissionRow';
 import SubmissionRowSkeleton from '../skeletons/SubmissionRowSkeleton';
 import { useDashboardFilter } from '../../../hooks';
+import { useToast } from '../../../lib/ToastContext';
 
 const Overview: React.FC = () => {
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const { addToast } = useToast();
 
   // Simulate initial data loading
   useEffect(() => {
@@ -51,6 +53,14 @@ const Overview: React.FC = () => {
       setIsModalOpen(true);
   };
 
+  const handleExportAll = () => {
+      addToast({
+          type: 'info',
+          title: 'Export gestartet',
+          message: `${filteredItems.length} Dateien werden vorbereitet...`
+      });
+  };
+
   const gridLayoutClass = "grid grid-cols-[3fr_1.5fr_1fr_1.2fr_1.2fr_2fr] gap-4 items-center px-4";
 
   return (
@@ -77,7 +87,7 @@ const Overview: React.FC = () => {
             >
                 <Filter size={16} className="mr-2" /> Filter
             </Button>
-            <Button variant="primary" size="sm">
+            <Button variant="primary" size="sm" onClick={handleExportAll}>
                 <Download size={16} className="mr-2" /> Alle Exportieren
             </Button>
         </div>

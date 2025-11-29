@@ -1,6 +1,10 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { ThemeProvider } from './lib/ThemeContext';
+import { AuthProvider } from './lib/AuthContext';
+import { ToastProvider } from './lib/ToastContext';
+import ErrorBoundary from './components/ui/ErrorBoundary';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 // Landing Components
 import Navbar from './components/landing/Navbar';
@@ -8,7 +12,6 @@ import Hero from './components/landing/Hero';
 import Features from './components/landing/Features';
 import Pricing from './components/landing/Pricing';
 import Footer from './components/landing/Footer';
-import CallToAction from './components/CallToAction';
 
 // Auth Components
 import SignIn from './components/auth/SignIn';
@@ -24,7 +27,7 @@ import DashboardOverview from './components/dashboard/views/Overview';
 import DashboardTeam from './components/dashboard/views/Team';
 import DashboardSettings from './components/dashboard/views/Settings';
 
-// Layout wrapper for landing pages to ensure Navbar/Footer are present
+// Layout wrapper for landing pages
 const LandingLayout: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col font-sans text-slate-900 dark:text-slate-50 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
@@ -42,41 +45,50 @@ const LandingPage: React.FC = () => (
     <Hero />
     <Features />
     <Pricing />
-    <CallToAction />
   </>
 );
 
 const App: React.FC = () => {
   return (
-    <ThemeProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public Landing Routes */}
-          <Route path="/" element={<LandingLayout />}>
-            <Route index element={<LandingPage />} />
-          </Route>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <AuthProvider>
+          <ToastProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Public Landing Routes */}
+                <Route path="/" element={<LandingLayout />}>
+                  <Route index element={<LandingPage />} />
+                </Route>
 
-          {/* Auth Routes */}
-          <Route path="/login" element={<SignIn />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+                {/* Auth Routes */}
+                <Route path="/login" element={<SignIn />} />
+                <Route path="/signup" element={<SignUp />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* Client Portal - Standalone Layout */}
-          <Route path="/portal" element={<AdvisorPortal />} />
+                {/* Client Portal - Standalone Layout */}
+                <Route path="/portal" element={<AdvisorPortal />} />
 
-          {/* Dashboard Routes - Protected Layout */}
-          <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<Navigate to="/dashboard/overview" replace />} />
-            <Route path="overview" element={<DashboardOverview />} />
-            <Route path="team" element={<DashboardTeam />} />
-            <Route path="settings" element={<DashboardSettings />} />
-          </Route>
+                {/* Dashboard Routes - Protected Layout */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute>
+                    <DashboardLayout />
+                  </ProtectedRoute>
+                }>
+                  <Route index element={<Navigate to="/dashboard/overview" replace />} />
+                  <Route path="overview" element={<DashboardOverview />} />
+                  <Route path="team" element={<DashboardTeam />} />
+                  <Route path="settings" element={<DashboardSettings />} />
+                </Route>
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </ThemeProvider>
+                {/* Fallback */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </BrowserRouter>
+          </ToastProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 };
 

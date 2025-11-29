@@ -10,11 +10,13 @@ import {
 } from 'lucide-react';
 import ThemeSelector from '../ThemeSelector';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../lib/AuthContext';
 
 const DashboardLayout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   const navItems = [
     { id: 'overview', path: '/dashboard/overview', label: 'Übersicht', icon: LayoutDashboard },
@@ -23,6 +25,7 @@ const DashboardLayout: React.FC = () => {
   ] as const;
 
   const handleLogout = () => {
+    logout();
     navigate('/');
   };
 
@@ -48,6 +51,21 @@ const DashboardLayout: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* User Profile Snippet */}
+        {user && (
+            <div className="px-6 pt-6 pb-2">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                    <div className="w-8 h-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-xs font-bold text-primary-700 dark:text-primary-400">
+                        {user.avatar || user.name.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="overflow-hidden">
+                        <div className="text-xs font-bold text-slate-900 dark:text-white truncate">{user.name}</div>
+                        <div className="text-[10px] text-slate-500 truncate">{user.email}</div>
+                    </div>
+                </div>
+            </div>
+        )}
 
         {/* Navigation */}
         <nav className="flex-grow p-4 space-y-1">

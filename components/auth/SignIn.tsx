@@ -1,17 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Button from '../ui/Button';
 import AuthLayout from './AuthLayout';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, Loader2 } from 'lucide-react';
 import IconInput from '../ui/IconInput';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../lib/AuthContext';
+import { useToast } from '../../lib/ToastContext';
 
 const SignIn: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
+  const { addToast } = useToast();
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Redirecting to Advisor Dashboard");
-    navigate('/dashboard');
+    setIsLoading(true);
+
+    try {
+        await login(email);
+        addToast({
+            type: 'success',
+            title: 'Willkommen zurück!',
+            message: 'Sie haben sich erfolgreich angemeldet.'
+        });
+        
+        // Redirect to where they wanted to go, or dashboard
+        const from = (location.state as any)?.from?.pathname || '/dashboard';
+        navigate(from, { replace: true });
+    } catch (error) {
+        addToast({
+            type: 'error',
+            title: 'Fehler bei der Anmeldung',
+            message: 'Bitte überprüfen Sie Ihre Zugangsdaten.'
+        });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -26,6 +55,8 @@ const SignIn: React.FC = () => {
                 icon={Mail}
                 type="email"
                 placeholder="name@kanzlei.de"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
             />
 
@@ -44,12 +75,14 @@ const SignIn: React.FC = () => {
                     icon={Lock}
                     type="password"
                     placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     required
                 />
             </div>
 
-            <Button fullWidth className="mt-2 rounded-xl py-3 shadow-lg shadow-primary-500/20">
-                Anmelden
+            <Button fullWidth disabled={isLoading} className="mt-2 rounded-xl py-3 shadow-lg shadow-primary-500/20">
+                {isLoading ? <Loader2 className="animate-spin" /> : 'Anmelden'}
             </Button>
         </form>
 

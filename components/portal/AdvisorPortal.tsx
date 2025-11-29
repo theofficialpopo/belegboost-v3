@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import PortalLayout from './PortalLayout';
 import Button from '../ui/Button';
 import { ArrowLeft, ArrowRight, CheckCircle2, Upload } from 'lucide-react';
@@ -8,9 +8,11 @@ import PeriodBalanceStep from './steps/PeriodBalanceStep';
 import AdvisorFinalizeStep from './steps/AdvisorFinalizeStep';
 import { usePortalForm } from '../../hooks';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../../lib/ToastContext';
 
 const AdvisorPortal: React.FC = () => {
   const navigate = useNavigate();
+  const { addToast } = useToast();
   const { 
     currentStep, 
     totalSteps, 
@@ -22,6 +24,18 @@ const AdvisorPortal: React.FC = () => {
     restart, 
     canProceed 
   } = usePortalForm();
+
+  // Show toast when success state is reached
+  useEffect(() => {
+    if (isSuccess) {
+        addToast({
+            type: 'success',
+            title: 'Upload erfolgreich!',
+            message: 'Ihre Daten wurden sicher übertragen.',
+            duration: 5000
+        });
+    }
+  }, [isSuccess, addToast]);
 
   const getStepTitle = (step: number) => {
       switch(step) {

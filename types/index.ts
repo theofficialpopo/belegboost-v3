@@ -6,6 +6,31 @@ import { SUBMISSION_STATUS, TEAM_ROLES } from '../constants';
 export type SubmissionStatus = typeof SUBMISSION_STATUS[keyof typeof SUBMISSION_STATUS];
 export type TeamRole = typeof TEAM_ROLES[keyof typeof TEAM_ROLES];
 
+// --- Auth & User Types ---
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: TeamRole;
+  avatar?: string;
+  companyName?: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+}
+
+// --- Toast Types ---
+export interface ToastMessage {
+  id: string;
+  type: 'success' | 'error' | 'info' | 'warning';
+  title: string;
+  message?: string;
+  duration?: number;
+}
+
 // --- Landing Page Types ---
 export interface NavItem {
   label: string;
