@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { forwardRef } from 'react';
 import { LucideIcon } from 'lucide-react';
 
 interface IconInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -9,7 +9,7 @@ interface IconInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
 }
 
-const IconInput: React.FC<IconInputProps> = ({
+const IconInput = forwardRef<HTMLInputElement, IconInputProps>(({
   label,
   icon: Icon,
   rightElement,
@@ -17,7 +17,7 @@ const IconInput: React.FC<IconInputProps> = ({
   className = '',
   error,
   ...props
-}) => {
+}, ref) => {
   return (
     <div className={containerClassName}>
       {label && (
@@ -32,6 +32,7 @@ const IconInput: React.FC<IconInputProps> = ({
           </div>
         )}
         <input
+          ref={ref}
           className={`w-full ${Icon ? 'pl-10' : 'pl-4'} ${rightElement ? 'pr-32' : 'pr-4'} py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border focus:ring-2 focus:border-transparent outline-none transition-all text-slate-900 dark:text-white ${
             error
               ? 'border-red-300 focus:ring-red-500'
@@ -48,6 +49,8 @@ const IconInput: React.FC<IconInputProps> = ({
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
     </div>
   );
-};
+});
+
+IconInput.displayName = 'IconInput';
 
 export default IconInput;
