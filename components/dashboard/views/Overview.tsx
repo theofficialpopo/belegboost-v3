@@ -33,9 +33,9 @@ const Overview: React.FC = () => {
       setIsModalOpen(true);
   };
 
-  // Optimized Grid Layout using fr units to properly handle gaps:
-  // Client (2.8fr) | Advisor (1.5fr) | Period (1.2fr) | Balance (1.2fr) | Time (1.3fr) | Actions (2fr)
-  const gridLayoutClass = "grid grid-cols-[2.8fr_1.5fr_1.2fr_1.2fr_1.3fr_2fr] gap-4 items-center px-4";
+  // Optimized Grid Layout using fr units for fluid alignment
+  // Client (3fr) | Advisor (1.5fr) | Period (1fr) | Balance (1.2fr) | Time (1.2fr) | Actions (2.1fr)
+  const gridLayoutClass = "grid grid-cols-[3fr_1.5fr_1fr_1.2fr_1.2fr_2.1fr] gap-4 items-center px-4";
 
   return (
     <div className="animate-in slide-in-from-bottom-4 fade-in duration-500">
