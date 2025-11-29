@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Modal from '../../ui/Modal';
 import Button from '../../ui/Button';
 import IconInput from '../../ui/IconInput';
-import { TeamMember } from '../../../lib/dashboard-data';
+import { TeamMember } from '../../../types';
 import { User, Mail, Briefcase, Eye, EyeOff, ShieldAlert, Users, Crown, Lock } from 'lucide-react';
 
 interface TeamEditModalProps {
@@ -27,7 +27,6 @@ const TeamEditModal: React.FC<TeamEditModalProps> = ({ member, isOpen, onClose }
   }, [member]);
 
   const handleSave = () => {
-    // TODO: Backend save logic
     console.log("Saving member:", { ...formData, isPubliclyVisible: isVisible });
     onClose();
   };
@@ -38,7 +37,7 @@ const TeamEditModal: React.FC<TeamEditModalProps> = ({ member, isOpen, onClose }
     <Modal isOpen={isOpen} onClose={onClose} title={member ? "Mitarbeiter bearbeiten" : "Mitarbeiter einladen"} maxWidth="max-w-lg">
       <div className="space-y-6">
         
-        {/* Header Section: Avatar + Primary Info */}
+        {/* Header Section */}
         <div className="flex items-start gap-5">
              <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-2xl flex items-center justify-center text-xl font-bold text-primary-700 dark:text-primary-400 shrink-0">
                  {formData.avatar || (formData.name ? formData.name.substring(0,2).toUpperCase() : '??')}

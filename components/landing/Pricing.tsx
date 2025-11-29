@@ -1,15 +1,30 @@
 import React, { useState } from 'react';
 import { Check } from 'lucide-react';
 import Button from '../ui/Button';
-import { PricingTier } from '../types';
+import { PricingTier } from '../../types';
 
-const Pricing: React.FC = () => {
+interface PricingProps {
+  onNavigate?: (page: 'landing' | 'signin' | 'signup') => void;
+}
+
+const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
   const [isAnnual, setIsAnnual] = useState(true);
+
+  // Base monthly prices
+  const basePrices = {
+    starter: 29,
+    growth: 79,
+    agency: 199
+  };
+
+  const calculatePrice = (base: number) => {
+    return isAnnual ? Math.floor(base * 0.8) : base;
+  };
 
   const tiers: PricingTier[] = [
     {
       name: "Starter",
-      price: 29,
+      price: calculatePrice(basePrices.starter),
       description: "Für Freelancer mit einem Fremdwährungskonto.",
       features: ["Bis zu 100 Transaktionen", "1 Bankverbindung (z.B. Wise)", "Täglicher Kursabruf", "Standard DATEV Export"],
       buttonText: "Kostenlos testen",
@@ -17,16 +32,16 @@ const Pricing: React.FC = () => {
     },
     {
       name: "Growth",
-      price: 79,
+      price: calculatePrice(basePrices.growth),
       description: "Für wachsende E-Commerce Brands.",
-      features: ["Bis zu 1.000 Transaktionen", "5 Bankverbindungen", "Automatische Kontierung", "Belegbild-Matching", "Priority Support"],
+      features: ["Bis zu 1.000 Transaktionen", "5 Bankverbindungen", "Automatische Kontierung", "Stapelverarbeitung", "Priority Support"],
       isPopular: true,
       buttonText: "Jetzt starten",
       buttonVariant: "primary"
     },
     {
       name: "Kanzlei",
-      price: 199,
+      price: calculatePrice(basePrices.agency),
       description: "Für Steuerberater mit vielen Mandanten.",
       features: ["Unbegrenzte Transaktionen", "Unbegrenzte Mandanten", "White-Label Portal", "Kanzlei-Dashboard", "Dedizierter Onboarding-Manager"],
       buttonText: "Vertrieb kontaktieren",
@@ -35,16 +50,16 @@ const Pricing: React.FC = () => {
   ];
 
   return (
-    <section id="pricing" className="py-24 bg-slate-50 dark:bg-slate-900 transition-colors duration-300 border-t border-slate-200 dark:border-slate-800">
+    <section id="pricing" className="py-24 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Header */}
         <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold font-sans text-slate-900 dark:text-white mb-4">
+          <h2 className="text-3xl md:text-5xl font-bold font-sans text-slate-900 dark:text-white mb-4">
             Preise, die skalieren
           </h2>
           <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-8">
-            Starten Sie mit einer 14-tägigen kostenlosen Testphase. Keine Kreditkarte erforderlich.
+            Starten Sie mit einer 14-tägigen kostenlosen Testphase.
           </p>
 
           {/* Toggle */}
@@ -69,14 +84,14 @@ const Pricing: React.FC = () => {
           {tiers.map((tier) => (
             <div 
               key={tier.name}
-              className={`flex flex-col relative rounded-2xl p-8 transition-all duration-300 ${
+              className={`flex flex-col relative rounded-[2rem] p-8 transition-all duration-300 ${
                 tier.isPopular 
-                  ? 'bg-white dark:bg-slate-800 ring-2 ring-primary-500 dark:ring-primary-500 shadow-2xl shadow-primary-500/10 dark:shadow-black/50 z-10' 
+                  ? 'bg-white dark:bg-slate-800 ring-2 ring-primary-500 dark:ring-primary-500 shadow-2xl shadow-primary-500/10 dark:shadow-black/50 z-10 scale-105' 
                   : 'bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
               }`}
             >
               {tier.isPopular && (
-                <div className="absolute top-0 right-0 bg-primary-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl uppercase tracking-wider">
+                <div className="absolute top-0 right-0 bg-primary-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-[1.5rem] uppercase tracking-wider">
                   Bestseller
                 </div>
               )}
@@ -86,10 +101,15 @@ const Pricing: React.FC = () => {
                 <p className="text-sm text-slate-500 dark:text-slate-400 min-h-[40px] mb-6">{tier.description}</p>
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                    {Math.floor(tier.price)}€
+                    {tier.price}€
                   </span>
                   <span className="text-slate-500 dark:text-slate-400 font-medium">/ Monat</span>
                 </div>
+                {isAnnual && (
+                    <div className="text-xs text-green-600 dark:text-green-400 font-medium mt-1">
+                        Jährliche Abrechnung (spart 20%)
+                    </div>
+                )}
               </div>
 
               <div className="h-px bg-slate-100 dark:bg-slate-700/50 mb-8"></div>
@@ -109,6 +129,7 @@ const Pricing: React.FC = () => {
                 variant={tier.buttonVariant as any} 
                 fullWidth
                 className={`rounded-xl py-3 ${tier.isPopular ? 'bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-500/20' : ''}`}
+                onClick={() => onNavigate?.('signup')}
               >
                 {tier.buttonText}
               </Button>

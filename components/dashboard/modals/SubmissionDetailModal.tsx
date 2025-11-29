@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import Modal from '../../ui/Modal';
 import Button from '../../ui/Button';
-import { Submission } from '../../../lib/dashboard-data';
+import { Submission } from '../../../types';
 import { CreditCard, ArrowRight, LayoutList, List } from 'lucide-react';
 import SubmissionOverviewTab from './submission/SubmissionOverviewTab';
 import SubmissionTransactionsTab from './submission/SubmissionTransactionsTab';
@@ -27,7 +26,6 @@ const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({ submissio
   if (!submission) return null;
 
   const handleSave = () => {
-    // TODO: Backend save logic
     console.log(`Saving DATEV Account ${datevAccount} for submission ${submission.id}`);
     onClose();
   };
@@ -36,7 +34,7 @@ const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({ submissio
     <Modal isOpen={isOpen} onClose={onClose} title="Mandanten-Export Details" maxWidth="max-w-2xl">
       <div className="flex flex-col h-full">
         
-        {/* Header Summary - Always Visible */}
+        {/* Header Summary */}
         <div className="flex items-start justify-between bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 mb-6 shrink-0">
           <div>
             <h4 className="font-bold text-lg text-slate-900 dark:text-white">{submission.clientName}</h4>
@@ -91,7 +89,7 @@ const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({ submissio
             )}
         </div>
 
-        {/* Footer Actions - Sticky */}
+        {/* Footer Actions */}
         <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
             <div className="flex gap-3">
                 <Button variant="outline" fullWidth onClick={onClose}>

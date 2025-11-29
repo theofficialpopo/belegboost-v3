@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User, Search, CheckCircle2, Calculator } from 'lucide-react';
 import { PortalFormData } from '../../../types';
 import { formatDateDE, parseCurrencyToNumber } from '../../../lib/utils';
-import { ADVISORS } from '../../../lib/portal-data';
+import { ADVISORS } from '../../../lib/data';
 import CalculationSummary from '../ui/CalculationSummary';
 import StepHeader from '../ui/StepHeader';
 

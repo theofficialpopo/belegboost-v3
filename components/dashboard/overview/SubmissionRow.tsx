@@ -1,8 +1,8 @@
-
 import React from 'react';
 import { FileSpreadsheet } from 'lucide-react';
-import { Submission, getStatusConfig, getAdvisorById } from '../../../lib/dashboard-data';
-import { formatDisplayPeriod } from '../../../lib/utils';
+import { Submission } from '../../../types';
+import { getAdvisorById } from '../../../lib/data';
+import { formatDisplayPeriod, getStatusConfig } from '../../../lib/utils';
 
 interface SubmissionRowProps {
   submission: Submission;

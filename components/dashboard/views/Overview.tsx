@@ -1,41 +1,50 @@
-
 import React, { useState } from 'react';
 import { Download, Search, Filter, X } from 'lucide-react';
 import Button from '../../ui/Button';
-import { SUBMISSIONS, Submission } from '../../../lib/dashboard-data';
+import { SUBMISSIONS } from '../../../lib/data';
+import { Submission } from '../../../types';
 import SubmissionDetailModal from '../modals/SubmissionDetailModal';
 import OverviewHeader from '../overview/OverviewHeader';
 import SubmissionRow from '../overview/SubmissionRow';
+import { useDashboardFilter } from '../../../lib/hooks';
 
 const Overview: React.FC = () => {
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
-  // Search & Filter State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'new' | 'review' | 'exported'>('all');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Filter Logic
-  const filteredSubmissions = SUBMISSIONS.filter(sub => {
-    const matchesSearch = 
-        sub.clientName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        sub.clientNumber.includes(searchQuery) ||
-        sub.provider.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || sub.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
-  });
+  // Use custom filter hook
+  const { 
+    searchQuery, 
+    setSearchQuery, 
+    filters, 
+    updateFilter, 
+    resetFilters,
+    filteredItems 
+  } = useDashboardFilter(
+    SUBMISSIONS,
+    (sub, search, f) => {
+        const matchesSearch = 
+            sub.clientName.toLowerCase().includes(search.toLowerCase()) || 
+            sub.clientNumber.includes(search) ||
+            sub.provider.toLowerCase().includes(search.toLowerCase());
+        
+        const matchesStatus = f.status === 'all' || sub.status === f.status;
+        
+        return matchesSearch && matchesStatus;
+    },
+    { status: 'all' }
+  );
 
   const handleOpenDetail = (submission: Submission) => {
       setSelectedSubmission(submission);
       setIsModalOpen(true);
   };
 
-  // Optimized Grid Layout using fr units to properly handle gaps:
-  // Client (2.8fr) | Advisor (1.5fr) | Period (1.2fr) | Balance (1.2fr) | Time (1.3fr) | Actions (2fr)
-  const gridLayoutClass = "grid grid-cols-[2.8fr_1.5fr_1.2fr_1.2fr_1.3fr_2fr] gap-4 items-center px-4";
+  // Fixed Grid Layout using fr units
+  // Client (3fr) | Advisor (1.5fr) | Period (1.2fr - Reduced) | Balance (1.2fr) | Time (1.3fr) | Actions (2fr)
+  // This ensures perfect alignment regardless of gap size
+  const gridLayoutClass = "grid grid-cols-[3fr_1.5fr_1fr_1.2fr_1.2fr_2fr] gap-4 items-center px-4";
 
   return (
     <div className="animate-in slide-in-from-bottom-4 fade-in duration-500">
@@ -91,16 +100,16 @@ const Overview: React.FC = () => {
             )}
         </div>
 
-        {/* Status Filter Chips (Toggleable) */}
+        {/* Status Filter Chips */}
         {showFilters && (
             <div className="flex items-center gap-2 animate-in slide-in-from-top-2 fade-in duration-200">
                 <span className="text-xs font-bold text-slate-500 mr-2">Status:</span>
                 {(['all', 'new', 'review', 'exported'] as const).map(status => (
                     <button
                         key={status}
-                        onClick={() => setStatusFilter(status)}
+                        onClick={() => updateFilter('status', status)}
                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                            statusFilter === status 
+                            filters.status === status 
                             ? 'bg-primary-600 text-white shadow-md' 
                             : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
                         }`}
@@ -117,12 +126,12 @@ const Overview: React.FC = () => {
 
       {/* Submission List */}
       <div className="space-y-2">
-        {filteredSubmissions.length === 0 ? (
+        {filteredItems.length === 0 ? (
             <div className="text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
                 <p className="text-slate-500">Keine Einträge gefunden.</p>
-                {(searchQuery || statusFilter !== 'all') && (
+                {(searchQuery || filters.status !== 'all') && (
                     <button 
-                        onClick={() => { setSearchQuery(''); setStatusFilter('all'); }}
+                        onClick={resetFilters}
                         className="text-primary-600 text-sm font-medium hover:underline mt-2"
                     >
                         Filter zurücksetzen
@@ -130,7 +139,7 @@ const Overview: React.FC = () => {
                 )}
             </div>
         ) : (
-            filteredSubmissions.map((submission) => (
+            filteredItems.map((submission) => (
                 <SubmissionRow 
                     key={submission.id}
                     submission={submission}

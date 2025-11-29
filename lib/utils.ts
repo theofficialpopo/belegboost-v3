@@ -1,3 +1,5 @@
+import { CheckCircle2, AlertCircle, Clock, FileSpreadsheet } from 'lucide-react';
+import { Submission } from '../types';
 
 export const formatDateDE = (isoDate: string) => {
   if (!isoDate) return '-';
@@ -52,35 +54,51 @@ export const getSafeDateStrings = (year: number, monthIndex: number) => {
 };
 
 export const formatDisplayPeriod = (periodStr: string) => {
-    // Input formats expected: "01.09.2025 - 30.09.2025" or "Q3 2025" or "15.10.2025 - 20.10.2025"
+    // Expected formats: "YYYY-MM-DD - YYYY-MM-DD" or "01.09.2025 - 30.09.2025"
     if (!periodStr.includes(' - ')) return periodStr;
 
-    const [start, end] = periodStr.split(' - ');
+    // Detect format (ISO vs DE)
+    const isISO = periodStr.includes('-'); // YYYY-MM-DD has dashes
+    // Check if input is already formatted like "01.09.2025"
+    const hasDots = periodStr.includes('.');
+
+    let start, end;
+    if (hasDots) {
+        [start, end] = periodStr.split(' - ');
+    } else {
+        // Assume Q3 2025 etc
+        return periodStr;
+    }
+
     const parts1 = start.split('.');
     const parts2 = end.split('.');
 
-    // Fallback if format is unexpected
     if (parts1.length !== 3 || parts2.length !== 3) return periodStr;
 
     const [d1, m1, y1] = parts1;
     const [d2, m2, y2] = parts2;
 
-    // Logic: We want to show compact Month.Year - Month.Year
-    // We strip specific days to save space in the dashboard column
-
-    // Case 1: Same Month & Year (e.g. 01.09.2025 - 30.09.2025 OR 15.10.2025 - 20.10.2025)
-    // Result: "09.2025"
+    // Logic: Compact Month.Year
+    
+    // Case 1: Same Month & Year -> "09.2025"
     if (m1 === m2 && y1 === y2) {
         return `${m1}.${y1}`;
     }
     
-    // Case 2: Range across months, same year (e.g. 01.08.2025 - 30.09.2025)
-    // Result: "08. - 09.2025"
+    // Case 2: Range across months, same year -> "08. - 09.2025"
     if (y1 === y2) {
        return `${m1}. - ${m2}.${y1}`;
     }
 
-    // Case 3: Range across years
-    // Result: "12.2024 - 01.2025"
+    // Case 3: Range across years -> "12.2024 - 01.2025"
     return `${m1}.${y1} - ${m2}.${y2}`;
+};
+
+export const getStatusConfig = (status: Submission['status']) => {
+    switch (status) {
+        case 'new': return { label: 'Neu', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: CheckCircle2 };
+        case 'review': return { label: 'Prüfung', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: AlertCircle };
+        case 'exported': return { label: 'Exportiert', color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400', icon: FileSpreadsheet };
+        default: return { label: 'Unbekannt', color: 'bg-slate-100 text-slate-700', icon: Clock };
+    }
 };
