@@ -1,0 +1,73 @@
+import React from 'react';
+import Button from '../ui/Button';
+import AuthLayout from './AuthLayout';
+import { Mail, Lock } from 'lucide-react';
+import IconInput from '../ui/IconInput';
+
+interface SignInProps {
+  onNavigate: (page: 'landing' | 'signin' | 'signup' | 'forgot-password' | 'portal') => void;
+}
+
+const SignIn: React.FC<SignInProps> = ({ onNavigate }) => {
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("Demo: Redirecting to Advisor Portal");
+    onNavigate('portal');
+  };
+
+  return (
+    <AuthLayout 
+        title="Willkommen zurück" 
+        subtitle="Melden Sie sich an, um Ihre Exporte zu verwalten."
+        onBack={() => onNavigate('landing')}
+    >
+        <form className="space-y-4" onSubmit={handleSubmit}>
+            <IconInput
+                label="E-Mail Adresse"
+                icon={Mail}
+                type="email"
+                placeholder="name@kanzlei.de"
+                required
+            />
+
+            <div>
+                <div className="flex justify-between items-center mb-1.5">
+                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Passwort</label>
+                    <button 
+                        type="button"
+                        onClick={() => onNavigate('forgot-password')} 
+                        className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
+                    >
+                        Passwort vergessen?
+                    </button>
+                </div>
+                <IconInput
+                    icon={Lock}
+                    type="password"
+                    placeholder="••••••••"
+                    required
+                />
+            </div>
+
+            <Button fullWidth className="mt-2 rounded-xl py-3 shadow-lg shadow-primary-500/20">
+                Anmelden
+            </Button>
+        </form>
+
+        <div className="mt-6 pt-6 border-t border-slate-100 dark:border-slate-800 text-center">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+                Noch keinen Account?{' '}
+                <button 
+                    onClick={() => onNavigate('signup')}
+                    className="font-semibold text-primary-600 dark:text-primary-400 hover:underline"
+                >
+                    Kostenlos registrieren
+                </button>
+            </p>
+        </div>
+    </AuthLayout>
+  );
+};
+
+export default SignIn;
