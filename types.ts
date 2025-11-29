@@ -1,5 +1,8 @@
 import { LucideIcon } from 'lucide-react';
 
+export type SubmissionStatus = 'new' | 'exported' | 'review';
+export type TeamRole = 'owner' | 'admin' | 'member';
+
 // --- Landing Page Types ---
 export interface NavItem {
   label: string;
@@ -66,8 +69,6 @@ export interface Advisor {
 }
 
 // --- Dashboard Types ---
-export type SubmissionStatus = 'new' | 'exported' | 'review';
-
 export interface Submission {
   id: string;
   clientName: string;
@@ -82,8 +83,6 @@ export interface Submission {
   assignedAdvisor: string; // The advisor selected by the client
   datevAccount?: string; // The DATEV account number (e.g. 1200) entered by advisor
 }
-
-export type TeamRole = 'owner' | 'admin' | 'member';
 
 export interface TeamMember {
   id: string;

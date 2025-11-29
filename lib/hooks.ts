@@ -1,2 +1,2 @@
-// Re-export from new hooks directory
+// Deprecated: Import directly from '../hooks' instead
 export * from '../hooks';

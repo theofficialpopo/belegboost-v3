@@ -24,8 +24,8 @@ const Navbar: React.FC = () => {
 
         {/* Links */}
         <div className="hidden md:flex items-center gap-8 font-medium text-sm text-slate-600 dark:text-slate-300">
-          <a href="#" className="hover:text-primary-500 transition-colors">Integrationen</a>
-          <a href="#" className="hover:text-primary-500 transition-colors">Preise</a>
+          <a href="#features" className="hover:text-primary-500 transition-colors">Integrationen</a>
+          <a href="#pricing" className="hover:text-primary-500 transition-colors">Preise</a>
           <a href="#" className="hover:text-primary-500 transition-colors">Kanzleien</a>
         </div>
 

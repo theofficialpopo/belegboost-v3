@@ -13,7 +13,7 @@ const Overview: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Use custom filter hook with Generics
+  // Use custom filter hook with Generics for strict type safety
   const { 
     searchQuery, 
     setSearchQuery, 

@@ -24,6 +24,7 @@ import DashboardOverview from './components/dashboard/views/Overview';
 import DashboardTeam from './components/dashboard/views/Team';
 import DashboardSettings from './components/dashboard/views/Settings';
 
+// Layout wrapper for landing pages to ensure Navbar/Footer are present
 const LandingLayout: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col font-sans text-slate-900 dark:text-slate-50 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
@@ -60,10 +61,10 @@ const App: React.FC = () => {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
 
-          {/* Client Portal */}
+          {/* Client Portal - Standalone Layout */}
           <Route path="/portal" element={<AdvisorPortal />} />
 
-          {/* Dashboard Routes */}
+          {/* Dashboard Routes - Protected Layout */}
           <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<Navigate to="/dashboard/overview" replace />} />
             <Route path="overview" element={<DashboardOverview />} />

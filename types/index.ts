@@ -2,6 +2,7 @@ import { LucideIcon } from 'lucide-react';
 import { SUBMISSION_STATUS, TEAM_ROLES } from '../constants';
 
 // --- Enums & Derived Types ---
+// Derive types directly from the runtime constants to ensure they never drift apart
 export type SubmissionStatus = typeof SUBMISSION_STATUS[keyof typeof SUBMISSION_STATUS];
 export type TeamRole = typeof TEAM_ROLES[keyof typeof TEAM_ROLES];
 
