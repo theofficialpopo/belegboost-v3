@@ -42,9 +42,6 @@ const HeroMockup: React.FC = () => {
             </div>
             <div className="text-right">
               <div className="text-sm font-bold text-slate-900 dark:text-white">39,42 €</div>
-              <div className="text-[10px] font-mono text-primary-600 dark:text-primary-400">
-                Konto 1200
-              </div>
             </div>
           </div>
 
@@ -63,9 +60,6 @@ const HeroMockup: React.FC = () => {
             </div>
             <div className="text-right">
               <div className="text-sm font-bold text-slate-900 dark:text-white">129,00 €</div>
-              <div className="text-[10px] font-mono text-primary-600 dark:text-primary-400">
-                Konto 1200
-              </div>
             </div>
           </div>
 
@@ -84,9 +78,6 @@ const HeroMockup: React.FC = () => {
             </div>
             <div className="text-right">
               <div className="text-sm font-bold text-slate-900 dark:text-white">11,15 €</div>
-              <div className="text-[10px] font-mono text-slate-400">
-                Automatische Zuordnung...
-              </div>
             </div>
           </div>
         </div>

@@ -5,15 +5,15 @@ import { Mail, Lock } from 'lucide-react';
 import IconInput from '../ui/IconInput';
 
 interface SignInProps {
-  onNavigate: (page: 'landing' | 'signin' | 'signup' | 'forgot-password' | 'portal') => void;
+  onNavigate: (page: 'landing' | 'signin' | 'signup' | 'forgot-password' | 'portal' | 'dashboard') => void;
 }
 
 const SignIn: React.FC<SignInProps> = ({ onNavigate }) => {
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Demo: Redirecting to Advisor Portal");
-    onNavigate('portal');
+    console.log("Redirecting to Advisor Dashboard");
+    onNavigate('dashboard');
   };
 
   return (
@@ -65,6 +65,14 @@ const SignIn: React.FC<SignInProps> = ({ onNavigate }) => {
                     Kostenlos registrieren
                 </button>
             </p>
+            <div className="mt-4">
+               <button 
+                    onClick={() => onNavigate('portal')}
+                    className="text-xs text-slate-400 hover:text-primary-500 transition-colors"
+               >
+                   (Demo: Zum Mandanten-Portal)
+               </button>
+            </div>
         </div>
     </AuthLayout>
   );

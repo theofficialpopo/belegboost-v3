@@ -45,9 +45,16 @@ import ForgotPassword from './components/auth/ForgotPassword';
 // Portal Imports
 import AdvisorPortal from './components/portal/AdvisorPortal';
 
+// Dashboard Imports
+import DashboardLayout from './components/dashboard/DashboardLayout';
+import DashboardOverview from './components/dashboard/views/Overview';
+import DashboardTeam from './components/dashboard/views/Team';
+import DashboardSettings from './components/dashboard/views/Settings';
+
 const AppContent: React.FC = () => {
   const { variant } = useTheme();
-  const [currentPage, setCurrentPage] = useState<'landing' | 'signin' | 'signup' | 'forgot-password' | 'portal'>('landing');
+  const [currentPage, setCurrentPage] = useState<'landing' | 'signin' | 'signup' | 'forgot-password' | 'portal' | 'dashboard'>('landing');
+  const [dashboardPage, setDashboardPage] = useState<'overview' | 'team' | 'settings'>('overview');
 
   // Handle Auth & Portal Routing
   if (currentPage === 'signin') {
@@ -61,6 +68,21 @@ const AppContent: React.FC = () => {
   }
   if (currentPage === 'portal') {
     return <AdvisorPortal onNavigate={setCurrentPage} />;
+  }
+
+  // Handle Dashboard Routing
+  if (currentPage === 'dashboard') {
+    return (
+      <DashboardLayout 
+        activePage={dashboardPage} 
+        onNavigate={setDashboardPage} 
+        onLogout={() => setCurrentPage('landing')}
+      >
+        {dashboardPage === 'overview' && <DashboardOverview />}
+        {dashboardPage === 'team' && <DashboardTeam />}
+        {dashboardPage === 'settings' && <DashboardSettings />}
+      </DashboardLayout>
+    );
   }
 
   // --- Variants ---
