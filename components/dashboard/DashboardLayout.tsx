@@ -9,27 +9,26 @@ import {
   FileText
 } from 'lucide-react';
 import ThemeSelector from '../ThemeSelector';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 
-interface DashboardLayoutProps {
-  children: React.ReactNode;
-  activePage: 'overview' | 'team' | 'settings';
-  onNavigate: (page: 'overview' | 'team' | 'settings') => void;
-  onLogout: () => void;
-}
-
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ 
-  children, 
-  activePage, 
-  onNavigate, 
-  onLogout 
-}) => {
+const DashboardLayout: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const navItems = [
-    { id: 'overview', label: 'Übersicht', icon: LayoutDashboard },
-    { id: 'team', label: 'Team', icon: Users },
-    { id: 'settings', label: 'Einstellungen', icon: Settings },
+    { id: 'overview', path: '/dashboard/overview', label: 'Übersicht', icon: LayoutDashboard },
+    { id: 'team', path: '/dashboard/team', label: 'Team', icon: Users },
+    { id: 'settings', path: '/dashboard/settings', label: 'Einstellungen', icon: Settings },
   ] as const;
+
+  const handleLogout = () => {
+    navigate('/');
+  };
+
+  const isPathActive = (path: string) => {
+    return location.pathname.startsWith(path);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex transition-colors duration-300 font-sans">
@@ -55,9 +54,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           {navItems.map((item) => (
             <button
               key={item.id}
-              onClick={() => onNavigate(item.id)}
+              onClick={() => navigate(item.path)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                activePage === item.id 
+                isPathActive(item.path)
                   ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 shadow-sm' 
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
               }`}
@@ -74,7 +73,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
              <ThemeSelector showVariantSwitcher={false} className="w-full !border-slate-200 dark:!border-slate-700 justify-center" />
           </div>
           <button 
-            onClick={onLogout}
+            onClick={handleLogout}
             className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
           >
             <LogOut size={18} />
@@ -104,9 +103,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     {navItems.map((item) => (
                         <button
                         key={item.id}
-                        onClick={() => { onNavigate(item.id); setIsMobileMenuOpen(false); }}
+                        onClick={() => { navigate(item.path); setIsMobileMenuOpen(false); }}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                            activePage === item.id 
+                            isPathActive(item.path)
                             ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400' 
                             : 'text-slate-600 dark:text-slate-400'
                         }`}
@@ -116,7 +115,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         </button>
                     ))}
                     <div className="h-px bg-slate-100 dark:bg-slate-800 my-2"></div>
-                    <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-500">
+                    <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-500">
                         <LogOut size={18} /> Abmelden
                     </button>
                 </nav>
@@ -127,7 +126,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
       {/* Main Content */}
       <main className="flex-1 lg:pl-64 pt-16 lg:pt-0">
         <div className="max-w-6xl mx-auto p-4 md:p-8">
-            {children}
+            <Outlet />
         </div>
       </main>
     </div>

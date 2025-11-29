@@ -3,12 +3,10 @@ import Button from '../ui/Button';
 import AuthLayout from './AuthLayout';
 import { Mail, Lock, User, Building, Globe, CheckCircle2, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import IconInput from '../ui/IconInput';
+import { useNavigate } from 'react-router-dom';
 
-interface SignUpProps {
-  onNavigate: (page: 'landing' | 'signin' | 'signup' | 'forgot-password') => void;
-}
-
-const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
+const SignUp: React.FC = () => {
+  const navigate = useNavigate();
   const [step, setStep] = useState<1 | 2>(1);
   const [loading, setLoading] = useState(false);
   
@@ -59,7 +57,7 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
     <AuthLayout 
         title={step === 1 ? "Account erstellen" : "Kanzlei einrichten"}
         subtitle={step === 1 ? "Starten Sie Ihre 14-tägige Testphase." : "Richten Sie Ihren persönlichen Workspace ein."}
-        onBack={() => step === 1 ? onNavigate('landing') : setStep(1)}
+        onBack={() => step === 1 ? navigate('/') : setStep(1)}
     >
         <div className="flex items-center gap-2 mb-8">
             <div className={`h-2 flex-1 rounded-full transition-colors ${step >= 1 ? 'bg-primary-500' : 'bg-slate-200 dark:bg-slate-700'}`} />
@@ -154,7 +152,7 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
             <p className="text-sm text-slate-500 dark:text-slate-400">
                 Bereits registriert?{' '}
                 <button 
-                    onClick={() => onNavigate('signin')}
+                    onClick={() => navigate('/login')}
                     className="font-semibold text-primary-600 dark:text-primary-400 hover:underline"
                 >
                     Anmelden

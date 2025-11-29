@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import { Check } from 'lucide-react';
 import Button from '../ui/Button';
 import { PricingTier } from '../../types';
+import { useNavigate } from 'react-router-dom';
 
-interface PricingProps {
-  onNavigate?: (page: 'landing' | 'signin' | 'signup') => void;
-}
-
-const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
+const Pricing: React.FC = () => {
+  const navigate = useNavigate();
   const [isAnnual, setIsAnnual] = useState(true);
 
   // Base monthly prices
@@ -129,7 +127,7 @@ const Pricing: React.FC<PricingProps> = ({ onNavigate }) => {
                 variant={tier.buttonVariant as any} 
                 fullWidth
                 className={`rounded-xl py-3 ${tier.isPopular ? 'bg-primary-600 hover:bg-primary-700 shadow-lg shadow-primary-500/20' : ''}`}
-                onClick={() => onNavigate?.('signup')}
+                onClick={() => navigate('/signup')}
               >
                 {tier.buttonText}
               </Button>

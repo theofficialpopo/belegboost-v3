@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { ThemeProvider } from './lib/ThemeContext';
 
 // Landing Components
@@ -23,52 +24,57 @@ import DashboardOverview from './components/dashboard/views/Overview';
 import DashboardTeam from './components/dashboard/views/Team';
 import DashboardSettings from './components/dashboard/views/Settings';
 
-const AppContent: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<'landing' | 'signin' | 'signup' | 'forgot-password' | 'portal' | 'dashboard'>('landing');
-  const [dashboardPage, setDashboardPage] = useState<'overview' | 'team' | 'settings'>('overview');
-
-  // Auth Routing
-  if (currentPage === 'signin') return <SignIn onNavigate={setCurrentPage} />;
-  if (currentPage === 'signup') return <SignUp onNavigate={setCurrentPage} />;
-  if (currentPage === 'forgot-password') return <ForgotPassword onNavigate={setCurrentPage} />;
-  
-  // Portal Routing
-  if (currentPage === 'portal') return <AdvisorPortal onNavigate={setCurrentPage} />;
-
-  // Dashboard Routing
-  if (currentPage === 'dashboard') {
-    return (
-      <DashboardLayout 
-        activePage={dashboardPage} 
-        onNavigate={setDashboardPage} 
-        onLogout={() => setCurrentPage('landing')}
-      >
-        {dashboardPage === 'overview' && <DashboardOverview />}
-        {dashboardPage === 'team' && <DashboardTeam />}
-        {dashboardPage === 'settings' && <DashboardSettings />}
-      </DashboardLayout>
-    );
-  }
-
-  // Default: Landing Page
+const LandingLayout: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col font-sans text-slate-900 dark:text-slate-50 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-      <Navbar onNavigate={setCurrentPage} />
+      <Navbar />
       <main className="flex-grow">
-        <Hero onNavigate={setCurrentPage} />
-        <Features />
-        <Pricing onNavigate={setCurrentPage} />
-        <CallToAction onNavigate={setCurrentPage} />
+        <Outlet />
       </main>
       <Footer />
     </div>
   );
 };
 
+const LandingPage: React.FC = () => (
+  <>
+    <Hero />
+    <Features />
+    <Pricing />
+    <CallToAction />
+  </>
+);
+
 const App: React.FC = () => {
   return (
     <ThemeProvider>
-      <AppContent />
+      <BrowserRouter>
+        <Routes>
+          {/* Public Landing Routes */}
+          <Route path="/" element={<LandingLayout />}>
+            <Route index element={<LandingPage />} />
+          </Route>
+
+          {/* Auth Routes */}
+          <Route path="/login" element={<SignIn />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+
+          {/* Client Portal */}
+          <Route path="/portal" element={<AdvisorPortal />} />
+
+          {/* Dashboard Routes */}
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<Navigate to="/dashboard/overview" replace />} />
+            <Route path="overview" element={<DashboardOverview />} />
+            <Route path="team" element={<DashboardTeam />} />
+            <Route path="settings" element={<DashboardSettings />} />
+          </Route>
+
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
     </ThemeProvider>
   );
 };

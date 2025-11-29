@@ -1,13 +1,12 @@
 import React from 'react';
 import { ArrowRight, Check } from 'lucide-react';
 import Button from '../ui/Button';
-import HeroMockup from './ui/HeroMockup'; 
+import HeroMockup from './ui/HeroMockup';
+import { useNavigate } from 'react-router-dom';
 
-interface HeroProps {
-  onNavigate?: (page: 'landing' | 'signin' | 'signup') => void;
-}
+const Hero: React.FC = () => {
+  const navigate = useNavigate();
 
-const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
   return (
     <section className="relative pt-48 pb-20 lg:pt-56 lg:pb-32 overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
       
@@ -42,7 +41,7 @@ const Hero: React.FC<HeroProps> = ({ onNavigate }) => {
                   <Button 
                     size="lg" 
                     className="rounded-full shadow-lg shadow-primary-500/20 px-8 hover:-translate-y-1 transition-transform"
-                    onClick={() => onNavigate?.('signup')}
+                    onClick={() => navigate('/signup')}
                   >
                     Kostenlos starten
                     <ArrowRight className="ml-2 w-5 h-5" />

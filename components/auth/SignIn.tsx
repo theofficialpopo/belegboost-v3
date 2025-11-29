@@ -3,24 +3,22 @@ import Button from '../ui/Button';
 import AuthLayout from './AuthLayout';
 import { Mail, Lock } from 'lucide-react';
 import IconInput from '../ui/IconInput';
+import { useNavigate } from 'react-router-dom';
 
-interface SignInProps {
-  onNavigate: (page: 'landing' | 'signin' | 'signup' | 'forgot-password' | 'portal' | 'dashboard') => void;
-}
-
-const SignIn: React.FC<SignInProps> = ({ onNavigate }) => {
+const SignIn: React.FC = () => {
+  const navigate = useNavigate();
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Redirecting to Advisor Dashboard");
-    onNavigate('dashboard');
+    navigate('/dashboard');
   };
 
   return (
     <AuthLayout 
         title="Willkommen zurück" 
         subtitle="Melden Sie sich an, um Ihre Exporte zu verwalten."
-        onBack={() => onNavigate('landing')}
+        onBack={() => navigate('/')}
     >
         <form className="space-y-4" onSubmit={handleSubmit}>
             <IconInput
@@ -36,7 +34,7 @@ const SignIn: React.FC<SignInProps> = ({ onNavigate }) => {
                     <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">Passwort</label>
                     <button 
                         type="button"
-                        onClick={() => onNavigate('forgot-password')} 
+                        onClick={() => navigate('/forgot-password')} 
                         className="text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
                     >
                         Passwort vergessen?
@@ -59,7 +57,7 @@ const SignIn: React.FC<SignInProps> = ({ onNavigate }) => {
             <p className="text-sm text-slate-500 dark:text-slate-400">
                 Noch keinen Account?{' '}
                 <button 
-                    onClick={() => onNavigate('signup')}
+                    onClick={() => navigate('/signup')}
                     className="font-semibold text-primary-600 dark:text-primary-400 hover:underline"
                 >
                     Kostenlos registrieren
@@ -67,7 +65,7 @@ const SignIn: React.FC<SignInProps> = ({ onNavigate }) => {
             </p>
             <div className="mt-4">
                <button 
-                    onClick={() => onNavigate('portal')}
+                    onClick={() => navigate('/portal')}
                     className="text-xs text-slate-400 hover:text-primary-500 transition-colors"
                >
                    (Demo: Zum Mandanten-Portal)

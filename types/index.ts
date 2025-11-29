@@ -1,4 +1,9 @@
 import { LucideIcon } from 'lucide-react';
+import { SUBMISSION_STATUS, TEAM_ROLES } from '../constants';
+
+// --- Enums & Derived Types ---
+export type SubmissionStatus = typeof SUBMISSION_STATUS[keyof typeof SUBMISSION_STATUS];
+export type TeamRole = typeof TEAM_ROLES[keyof typeof TEAM_ROLES];
 
 // --- Landing Page Types ---
 export interface NavItem {
@@ -71,23 +76,23 @@ export interface Submission {
   clientName: string;
   clientNumber: string;
   provider: string;
-  providerLogo: string; // Initials or short code
+  providerLogo: string;
   period: string;
   receivedAt: string;
   transactionCount: number;
-  status: 'new' | 'exported' | 'review';
+  status: SubmissionStatus;
   endBalance: string;
-  assignedAdvisor: string; // The advisor selected by the client
-  datevAccount?: string; // The DATEV account number (e.g. 1200) entered by advisor
+  assignedAdvisor: string;
+  datevAccount?: string;
 }
 
 export interface TeamMember {
   id: string;
   name: string;
-  jobTitle: string; // e.g. "Steuerfachwirtin"
-  role: 'owner' | 'admin' | 'member'; // System permission level
+  jobTitle: string;
+  role: TeamRole;
   email: string;
   avatar: string;
   status: 'active' | 'invited';
-  isPubliclyVisible: boolean; // Determines if they appear in the portal
+  isPubliclyVisible: boolean;
 }

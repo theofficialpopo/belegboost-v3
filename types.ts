@@ -66,6 +66,8 @@ export interface Advisor {
 }
 
 // --- Dashboard Types ---
+export type SubmissionStatus = 'new' | 'exported' | 'review';
+
 export interface Submission {
   id: string;
   clientName: string;
@@ -75,17 +77,19 @@ export interface Submission {
   period: string;
   receivedAt: string;
   transactionCount: number;
-  status: 'new' | 'exported' | 'review';
+  status: SubmissionStatus;
   endBalance: string;
   assignedAdvisor: string; // The advisor selected by the client
   datevAccount?: string; // The DATEV account number (e.g. 1200) entered by advisor
 }
 
+export type TeamRole = 'owner' | 'admin' | 'member';
+
 export interface TeamMember {
   id: string;
   name: string;
   jobTitle: string; // e.g. "Steuerfachwirtin"
-  role: 'owner' | 'admin' | 'member'; // System permission level
+  role: TeamRole; // System permission level
   email: string;
   avatar: string;
   status: 'active' | 'invited';

@@ -1,12 +1,11 @@
 import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import Button from './ui/Button';
+import { useNavigate } from 'react-router-dom';
 
-interface CallToActionProps {
-  onNavigate?: (page: 'landing' | 'signin' | 'signup') => void;
-}
+const CallToAction: React.FC = () => {
+  const navigate = useNavigate();
 
-const CallToAction: React.FC<CallToActionProps> = ({ onNavigate }) => {
   return (
     <section className="py-24 bg-white dark:bg-slate-950 transition-colors duration-300">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -26,7 +25,7 @@ const CallToAction: React.FC<CallToActionProps> = ({ onNavigate }) => {
             <Button 
               size="lg" 
               className="shadow-xl shadow-primary-500/20 dark:shadow-primary-900/40"
-              onClick={() => onNavigate?.('signup')}
+              onClick={() => navigate('/signup')}
             >
               Kostenlos starten
               <ArrowRight className="ml-2 w-5 h-5" />

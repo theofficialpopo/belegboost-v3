@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Plus, Search, X, Filter } from 'lucide-react';
 import Button from '../../ui/Button';
 import { TEAM_MEMBERS } from '../../../lib/data';
-import { TeamMember } from '../../../types';
+import { TeamMember, TeamRole } from '../../../types';
 import TeamEditModal from '../modals/TeamEditModal';
 import TeamMemberCard from '../team/TeamMemberCard';
-import { useDashboardFilter } from '../../../lib/hooks';
+import { useDashboardFilter } from '../../../hooks';
 
 const Team: React.FC = () => {
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
@@ -19,7 +19,7 @@ const Team: React.FC = () => {
     updateFilter, 
     resetFilters,
     filteredItems 
-  } = useDashboardFilter(
+  } = useDashboardFilter<TeamMember, { role: TeamRole | 'all', status: 'all' | 'active' | 'invited' }>(
     TEAM_MEMBERS,
     (member, search, f) => {
         const matchesSearch = 

@@ -2,19 +2,14 @@ import React, { useState } from 'react';
 import Button from '../ui/Button';
 import AuthLayout from './AuthLayout';
 import { Mail, CheckCircle2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-interface ForgotPasswordProps {
-  onNavigate: (page: 'landing' | 'signin' | 'signup' | 'forgot-password') => void;
-}
-
-const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) => {
+const ForgotPassword: React.FC = () => {
+  const navigate = useNavigate();
   const [isSent, setIsSent] = useState(false);
 
   const handleSubmit = () => {
     // TODO: Backend - Implement logic to send password reset email
-    // 1. Validate email format
-    // 2. Call API to request password reset
-    // 3. Handle success or error (silently fail if email not found is a common security practice)
     setIsSent(true);
   };
 
@@ -23,7 +18,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) => {
         <AuthLayout 
             title="E-Mail versendet" 
             subtitle="Wir haben Ihnen einen Link zum Zurücksetzen gesendet."
-            onBack={() => onNavigate('landing')}
+            onBack={() => navigate('/')}
         >
             <div className="text-center py-8">
                 <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -32,7 +27,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) => {
                 <p className="text-slate-600 dark:text-slate-300 mb-8">
                     Bitte überprüfen Sie Ihren Posteingang (und Spam-Ordner). Der Link ist 1 Stunde gültig.
                 </p>
-                <Button fullWidth onClick={() => onNavigate('signin')}>
+                <Button fullWidth onClick={() => navigate('/login')}>
                     Zurück zur Anmeldung
                 </Button>
             </div>
@@ -44,7 +39,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) => {
     <AuthLayout 
         title="Passwort vergessen?" 
         subtitle="Kein Problem. Geben Sie Ihre E-Mail ein."
-        onBack={() => onNavigate('signin')}
+        onBack={() => navigate('/login')}
     >
         <form className="space-y-4" onSubmit={(e) => e.preventDefault()}>
             <div>

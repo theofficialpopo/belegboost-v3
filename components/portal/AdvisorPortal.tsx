@@ -6,13 +6,11 @@ import IdentityStep from './steps/IdentityStep';
 import SmartUploadStep from './steps/SmartUploadStep';
 import PeriodBalanceStep from './steps/PeriodBalanceStep';
 import AdvisorFinalizeStep from './steps/AdvisorFinalizeStep';
-import { usePortalForm } from '../../lib/hooks';
+import { usePortalForm } from '../../hooks';
+import { useNavigate } from 'react-router-dom';
 
-interface AdvisorPortalProps {
-  onNavigate: (page: 'landing') => void;
-}
-
-const AdvisorPortal: React.FC<AdvisorPortalProps> = ({ onNavigate }) => {
+const AdvisorPortal: React.FC = () => {
+  const navigate = useNavigate();
   const { 
     currentStep, 
     totalSteps, 
@@ -51,7 +49,7 @@ const AdvisorPortal: React.FC<AdvisorPortalProps> = ({ onNavigate }) => {
                <Button onClick={restart} variant="outline">
                  Weitere Datei hochladen
                </Button>
-               <Button onClick={() => onNavigate('landing')} variant="primary">
+               <Button onClick={() => navigate('/')} variant="primary">
                  Zum Startbildschirm
                </Button>
            </div>
@@ -95,7 +93,7 @@ const AdvisorPortal: React.FC<AdvisorPortalProps> = ({ onNavigate }) => {
         <div className="mt-8 flex justify-between items-center pt-8 border-t border-slate-100 dark:border-slate-800">
             {currentStep > 1 && (
                 <button 
-                    onClick={() => prevStep(() => onNavigate('landing'))}
+                    onClick={() => prevStep(() => navigate('/'))}
                     className="flex items-center text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white font-medium transition-colors"
                 >
                     <ArrowLeft size={18} className="mr-2" />

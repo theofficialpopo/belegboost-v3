@@ -1,18 +1,17 @@
-
 import { useState } from 'react';
 
-export function useDashboardFilter<T>(
+export function useDashboardFilter<T, F>(
   items: T[], 
-  filterFn: (item: T, search: string, filters: any) => boolean,
-  initialFilters: any = {}
+  filterFn: (item: T, search: string, filters: F) => boolean,
+  initialFilters: F
 ) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState(initialFilters);
+  const [filters, setFilters] = useState<F>(initialFilters);
 
   const filteredItems = items.filter(item => filterFn(item, searchQuery, filters));
 
-  const updateFilter = (key: string, value: any) => {
-    setFilters((prev: any) => ({ ...prev, [key]: value }));
+  const updateFilter = <K extends keyof F>(key: K, value: F[K]) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
   const resetFilters = () => {

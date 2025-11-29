@@ -2,12 +2,11 @@ import React from 'react';
 import { FileText, Menu } from 'lucide-react';
 import Button from '../ui/Button';
 import ThemeSelector from '../ThemeSelector';
+import { useNavigate } from 'react-router-dom';
 
-interface NavbarProps {
-  onNavigate: (page: 'landing' | 'signin' | 'signup') => void;
-}
+const Navbar: React.FC = () => {
+  const navigate = useNavigate();
 
-const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
   return (
     <div className="fixed top-6 inset-x-0 z-50 flex justify-center px-4">
       <nav className="w-full max-w-5xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-full shadow-2xl shadow-slate-200/50 dark:shadow-black/50 px-6 py-3 flex items-center justify-between transition-all duration-300">
@@ -15,7 +14,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
         {/* Brand */}
         <div 
           className="flex items-center gap-3 cursor-pointer" 
-          onClick={() => onNavigate('landing')}
+          onClick={() => navigate('/')}
         >
             <div className="bg-gradient-to-tr from-primary-600 to-primary-400 text-white p-2 rounded-xl">
               <FileText size={20} className="fill-current" />
@@ -37,14 +36,14 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
             variant="ghost"
             size="sm" 
             className="hidden sm:inline-flex text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-            onClick={() => onNavigate('signin')}
+            onClick={() => navigate('/login')}
           >
             Login
           </Button>
           <Button 
             size="sm" 
             className="rounded-full bg-slate-900 text-white dark:bg-white dark:text-slate-900 hover:scale-105 transition-transform shadow-lg"
-            onClick={() => onNavigate('signup')}
+            onClick={() => navigate('/signup')}
           >
             Registrieren
           </Button>

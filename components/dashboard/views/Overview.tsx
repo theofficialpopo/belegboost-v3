@@ -2,18 +2,18 @@ import React, { useState } from 'react';
 import { Download, Search, Filter, X } from 'lucide-react';
 import Button from '../../ui/Button';
 import { SUBMISSIONS } from '../../../lib/data';
-import { Submission } from '../../../types';
+import { Submission, SubmissionStatus } from '../../../types';
 import SubmissionDetailModal from '../modals/SubmissionDetailModal';
 import OverviewHeader from '../overview/OverviewHeader';
 import SubmissionRow from '../overview/SubmissionRow';
-import { useDashboardFilter } from '../../../lib/hooks';
+import { useDashboardFilter } from '../../../hooks';
 
 const Overview: React.FC = () => {
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Use custom filter hook
+  // Use custom filter hook with Generics
   const { 
     searchQuery, 
     setSearchQuery, 
@@ -21,7 +21,7 @@ const Overview: React.FC = () => {
     updateFilter, 
     resetFilters,
     filteredItems 
-  } = useDashboardFilter(
+  } = useDashboardFilter<Submission, { status: SubmissionStatus | 'all' }>(
     SUBMISSIONS,
     (sub, search, f) => {
         const matchesSearch = 
@@ -41,9 +41,6 @@ const Overview: React.FC = () => {
       setIsModalOpen(true);
   };
 
-  // Fixed Grid Layout using fr units
-  // Client (3fr) | Advisor (1.5fr) | Period (1.2fr - Reduced) | Balance (1.2fr) | Time (1.3fr) | Actions (2fr)
-  // This ensures perfect alignment regardless of gap size
   const gridLayoutClass = "grid grid-cols-[3fr_1.5fr_1fr_1.2fr_1.2fr_2fr] gap-4 items-center px-4";
 
   return (
