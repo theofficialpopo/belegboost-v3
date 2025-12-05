@@ -11,6 +11,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { generateSlug } from '../../lib/utils';
 import { registerSchema, type RegisterFormData } from '../../lib/validations/auth';
+import { logError } from '@/lib/logger';
 
 // Use shared validation schema
 const signUpSchema = registerSchema;
@@ -51,10 +52,8 @@ const SignUp = () => {
   useEffect(() => {
     if (step === 2 && subdomain && !errors.subdomain) {
       setSubdomainStatus('checking');
-      const timer = setTimeout(() => {
-        setSubdomainStatus(subdomain === 'test' ? 'taken' : 'available');
-      }, 600);
-      return () => clearTimeout(timer);
+      // In production, this would be an actual API call
+      setSubdomainStatus(subdomain === 'test' ? 'taken' : 'available');
     } else {
       setSubdomainStatus('idle');
     }
@@ -63,11 +62,7 @@ const SignUp = () => {
   const onStep1Submit = async () => {
     const isValid = await trigger(['name', 'email', 'password']);
     if (isValid) {
-      setLoading(true);
-      setTimeout(() => {
-        setLoading(false);
-        setStep(2);
-      }, 400);
+      setStep(2);
     }
   };
 
@@ -111,7 +106,7 @@ const SignUp = () => {
       // Success - redirect to login page
       router.push('/login?registered=true');
     } catch (err) {
-      console.error('Registration error:', err);
+      logError('Registration error', err);
       setError('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Search, X, Filter } from 'lucide-react';
+import { Plus, Filter } from 'lucide-react';
 import Button from '../../ui/Button';
 import { TeamRole } from '../../../types';
 import { TeamMember as DBTeamMember } from '@/db/schema/team-members';
@@ -9,6 +9,7 @@ import TeamEditModal from '../modals/TeamEditModal';
 import TeamMemberCard from '../team/TeamMemberCard';
 import TeamMemberCardSkeleton from '../skeletons/TeamMemberCardSkeleton';
 import { useDashboardFilter } from '../../../hooks';
+import SearchFilterBar from '../../ui/SearchFilterBar';
 
 interface TeamProps {
   teamMembers: DBTeamMember[];
@@ -18,14 +19,7 @@ const Team = ({ teamMembers: initialTeamMembers }: TeamProps) => {
   const [selectedMember, setSelectedMember] = useState<DBTeamMember | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
-  }, []);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Memoized filter function
   const filterFn = useCallback(
@@ -83,6 +77,19 @@ const Team = ({ teamMembers: initialTeamMembers }: TeamProps) => {
     { value: 'invited' as const, label: 'Eingeladen' },
   ], []);
 
+  const filterGroups = useMemo(() => [
+    {
+      key: 'role' as const,
+      label: 'Rolle',
+      options: roleOptions,
+    },
+    {
+      key: 'status' as const,
+      label: 'Status',
+      options: statusOptions,
+    },
+  ], [roleOptions, statusOptions]);
+
   return (
     <div className="animate-in slide-in-from-bottom-4 fade-in duration-500">
 
@@ -114,74 +121,15 @@ const Team = ({ teamMembers: initialTeamMembers }: TeamProps) => {
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="mb-6 space-y-4">
-        {/* Search */}
-        <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <Search size={18} />
-            </div>
-            <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Suchen nach Name, E-Mail oder Position..."
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-shadow shadow-sm"
-            />
-            {searchQuery && (
-                <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                >
-                    <X size={16} />
-                </button>
-            )}
-        </div>
-
-        {/* Filters */}
-        {showFilters && (
-            <div className="flex flex-wrap items-center gap-4 animate-in slide-in-from-top-2 fade-in duration-200">
-
-                {/* Role Filter */}
-                <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-500 mr-1">Rolle:</span>
-                    {roleOptions.map(({ value, label }) => (
-                        <button
-                            key={value}
-                            onClick={() => updateFilter('role', value)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                                filters.role === value
-                                ? 'bg-primary-600 text-white shadow-md'
-                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-                            }`}
-                        >
-                            {label}
-                        </button>
-                    ))}
-                </div>
-
-                <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 hidden md:block"></div>
-
-                {/* Status Filter */}
-                <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-500 mr-1">Status:</span>
-                    {statusOptions.map(({ value, label }) => (
-                        <button
-                            key={value}
-                            onClick={() => updateFilter('status', value)}
-                            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                                filters.status === value
-                                ? 'bg-primary-600 text-white shadow-md'
-                                : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-                            }`}
-                        >
-                            {label}
-                        </button>
-                    ))}
-                </div>
-
-            </div>
-        )}
-      </div>
+      <SearchFilterBar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        searchPlaceholder="Suchen nach Name, E-Mail oder Position..."
+        showFilters={showFilters}
+        filterGroups={filterGroups}
+        currentFilters={filters}
+        onFilterChange={updateFilter}
+      />
 
       {/* Grid List */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -6,33 +6,9 @@
  */
 
 import { db } from '@/db';
-import { submissions, teamMembers, exports, organizations } from '@/db/schema';
+import { submissions, teamMembers, exports, organizations, users } from '@/db/schema';
 import { eq, desc, and, SQL, sql, count } from 'drizzle-orm';
 
-/**
- * Higher-order function that wraps any query with organization scope enforcement
- *
- * @param query - The query builder function
- * @param organizationId - The organization ID to scope the query to
- * @returns The scoped query result
- *
- * @example
- * const result = await withOrgScope(
- *   (orgId) => db.query.submissions.findMany({
- *     where: eq(submissions.organizationId, orgId),
- *   }),
- *   organizationId
- * );
- */
-export async function withOrgScope<T>(
-  query: (organizationId: string) => Promise<T>,
-  organizationId: string
-): Promise<T> {
-  if (!organizationId || organizationId.trim() === '') {
-    throw new Error('organizationId is required for scoped queries');
-  }
-  return query(organizationId);
-}
 
 /**
  * Get organization by subdomain slug
@@ -254,29 +230,6 @@ export async function getTeamMemberForOrg(
   });
 }
 
-/**
- * Count active team members for an organization
- *
- * @param organizationId - The organization ID to scope the query to
- * @returns Number of active team members
- */
-export async function countActiveTeamMembersForOrg(organizationId: string): Promise<number> {
-  if (!organizationId || organizationId.trim() === '') {
-    throw new Error('organizationId is required');
-  }
-
-  const members = await db.query.teamMembers.findMany({
-    where: and(
-      eq(teamMembers.organizationId, organizationId),
-      eq(teamMembers.status, 'active')
-    ),
-    columns: {
-      id: true,
-    },
-  });
-
-  return members.length;
-}
 
 // ============================================================================
 // EXPORTS QUERIES
@@ -301,8 +254,8 @@ export async function getExportsForOrg(
     throw new Error('organizationId is required');
   }
 
-  // Build conditions for exports query
-  const conditions: SQL[] = [];
+  // Build conditions for the query - organizationId filter is always required
+  const conditions: SQL[] = [eq(submissions.organizationId, organizationId)];
 
   if (options?.status) {
     conditions.push(eq(exports.status, options.status));
@@ -312,22 +265,37 @@ export async function getExportsForOrg(
     conditions.push(eq(exports.format, options.format));
   }
 
-  // PERFORMANCE FIX: Use eager loading with 'with' clause to join submissions in a single query
-  // This prevents N+1 queries by fetching exports and their related submissions together
-  const allExports = await db.query.exports.findMany({
-    where: conditions.length > 0 ? and(...conditions) : undefined,
-    orderBy: desc(exports.createdAt),
-    limit: options?.limit,
-    with: {
-      submission: true,  // Eager load submission in the same query
-      creator: true,
-    },
-  });
+  // PERFORMANCE FIX: Use innerJoin to filter at database level instead of fetching all exports
+  // This prevents fetching unnecessary rows by joining with submissions and filtering by organizationId
+  // Old approach fetched ALL exports then filtered in JavaScript (90-99% waste at scale)
+  let query = db
+    .select({
+      id: exports.id,
+      submissionId: exports.submissionId,
+      format: exports.format,
+      status: exports.status,
+      s3Key: exports.s3Key,
+      fileName: exports.fileName,
+      fileSizeBytes: exports.fileSizeBytes,
+      errorMessage: exports.errorMessage,
+      createdAt: exports.createdAt,
+      createdBy: exports.createdBy,
+      completedAt: exports.completedAt,
+      submission: submissions,
+      creator: users,
+    })
+    .from(exports)
+    .innerJoin(submissions, eq(exports.submissionId, submissions.id))
+    .leftJoin(users, eq(exports.createdBy, users.id))
+    .where(and(...conditions))
+    .orderBy(desc(exports.createdAt));
 
-  // Filter to only include exports whose submissions belong to this organization
-  return allExports.filter(exp =>
-    exp.submission && exp.submission.organizationId === organizationId
-  );
+  // Apply limit if specified
+  if (options?.limit) {
+    query = query.limit(options.limit) as any;
+  }
+
+  return await query;
 }
 
 /**
@@ -365,36 +333,3 @@ export async function getExportForOrg(
   return exportData;
 }
 
-/**
- * Count exports for an organization by status
- *
- * @param organizationId - The organization ID to scope the query to
- * @returns Object with counts by status
- */
-export async function countExportsByStatusForOrg(organizationId: string) {
-  if (!organizationId || organizationId.trim() === '') {
-    throw new Error('organizationId is required');
-  }
-
-  // PERFORMANCE FIX: Use SQL aggregation with JOIN instead of calling getExportsForOrg
-  // This executes a single SQL query with COUNT(CASE WHEN...) instead of filtering in JavaScript
-  const result = await db
-    .select({
-      pending: count(sql`CASE WHEN ${exports.status} = 'pending' THEN 1 END`),
-      processing: count(sql`CASE WHEN ${exports.status} = 'processing' THEN 1 END`),
-      completed: count(sql`CASE WHEN ${exports.status} = 'completed' THEN 1 END`),
-      failed: count(sql`CASE WHEN ${exports.status} = 'failed' THEN 1 END`),
-      total: count(exports.id),
-    })
-    .from(exports)
-    .innerJoin(submissions, eq(exports.submissionId, submissions.id))
-    .where(eq(submissions.organizationId, organizationId));
-
-  return {
-    pending: Number(result[0].pending),
-    processing: Number(result[0].processing),
-    completed: Number(result[0].completed),
-    failed: Number(result[0].failed),
-    total: Number(result[0].total),
-  };
-}

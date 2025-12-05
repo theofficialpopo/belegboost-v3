@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: "012"
 tags: [data-integrity, storage, transaction]
@@ -76,3 +76,16 @@ try {
 ### 2025-12-05 - Code Review Discovery
 **By:** Claude Code Review System
 **Actions:** Identified orphaned file risk in transaction handling
+
+### 2025-12-05 - Implementation Complete
+**By:** Claude Code
+**Actions:**
+- Added `deleteFile` and `deleteFileFromR2` functions to `lib/storage.ts`
+- Imported `DeleteObjectCommand` from AWS SDK
+- Refactored `app/api/portal/submit/route.ts` to implement two-phase commit pattern:
+  - Phase 1: Upload files to R2 BEFORE database transaction
+  - Phase 2: Insert database records within transaction
+  - Compensating transaction: Delete uploaded files if DB operations fail
+- Files are uploaded with temporary submission ID to avoid coupling
+- Comprehensive error handling ensures no orphaned files
+- All acceptance criteria met

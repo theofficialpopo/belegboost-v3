@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import type { PortalFormData } from '../types';
 import type { Organization } from '@/lib/OrganizationContext';
+import { logInfo, logError } from '@/lib/logger';
 
 const TOTAL_STEPS = 4;
 
@@ -73,11 +74,11 @@ export function usePortalForm(organization: Organization) {
       }
 
       const result = await response.json();
-      console.log('Submission successful:', result);
+      logInfo('Submission successful', { submissionId: result.id });
 
       setIsSuccess(true);
     } catch (err) {
-      console.error('Error submitting form:', err);
+      logError('Error submitting form', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
       setError(errorMessage);
       throw err;

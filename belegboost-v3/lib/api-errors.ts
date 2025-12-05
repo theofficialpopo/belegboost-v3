@@ -93,3 +93,25 @@ export function serverError(
 
   return NextResponse.json(response, { status: 500 });
 }
+
+/**
+ * Creates a standardized 403 Forbidden response for demo mode
+ * Use when a mutation is attempted in demo mode
+ */
+export function demoModeReadOnly() {
+  return NextResponse.json(
+    {
+      error: 'Demo mode is read-only',
+      details: 'Mutations are not allowed in demo mode. Please sign up for a real account.'
+    } as ApiErrorResponse,
+    { status: 403 }
+  );
+}
+
+/**
+ * Checks if the user is in demo mode
+ * Demo users have organizationId that matches the demo organization
+ */
+export function isDemoMode(organizationId: string | undefined): boolean {
+  return organizationId === 'demo-org-id';
+}

@@ -24,9 +24,26 @@ export default auth((req) => {
   if (isOrgRoute && segments[1] === 'dashboard') {
     const urlSlug = firstSegment;
 
-    // Skip auth checks for demo mode - anyone can access
+    // Demo mode: read-only access (GET requests only)
     if (urlSlug === 'demo') {
-      return NextResponse.next();
+      // Disable demo mode in production
+      if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEMO_MODE !== 'true') {
+        return NextResponse.redirect(new URL('/login', req.url));
+      }
+
+      // Allow GET requests (read-only)
+      if (req.method === 'GET') {
+        return NextResponse.next();
+      }
+
+      // Block all mutation requests (POST, PUT, PATCH, DELETE)
+      return NextResponse.json(
+        {
+          error: 'Demo mode is read-only',
+          message: 'Mutations are not allowed in demo mode'
+        },
+        { status: 403 }
+      );
     }
 
     // Not authenticated - redirect to login

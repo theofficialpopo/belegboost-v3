@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Download, Search, Filter, X } from 'lucide-react';
+import { Download, Filter } from 'lucide-react';
 import Button from '../../ui/Button';
 import { Submission, SubmissionStatus } from '../../../types';
 import SubmissionDetailModal from '../modals/SubmissionDetailModal';
@@ -10,6 +10,7 @@ import SubmissionRow from '../overview/SubmissionRow';
 import SubmissionRowSkeleton from '../skeletons/SubmissionRowSkeleton';
 import { useDashboardFilter } from '../../../hooks';
 import { useToastActions } from '../../../lib/ToastContext';
+import SearchFilterBar from '../../ui/SearchFilterBar';
 
 interface OverviewProps {
   submissions: Submission[];
@@ -19,15 +20,8 @@ const Overview = ({ submissions }: OverviewProps) => {
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const { addToast } = useToastActions();
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Memoized filter function
   const filterFn = useCallback(
@@ -80,6 +74,14 @@ const Overview = ({ submissions }: OverviewProps) => {
     { value: 'exported' as const, label: 'Exportiert' },
   ], []);
 
+  const filterGroups = useMemo(() => [
+    {
+      key: 'status' as const,
+      label: 'Status',
+      options: statusOptions,
+    },
+  ], [statusOptions]);
+
   return (
     <div className="animate-in slide-in-from-bottom-4 fade-in duration-500">
 
@@ -111,49 +113,15 @@ const Overview = ({ submissions }: OverviewProps) => {
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="mb-6 space-y-4">
-        {/* Search */}
-        <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                <Search size={18} />
-            </div>
-            <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Suchen nach Mandant, Datei oder Datum..."
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 outline-none transition-shadow shadow-sm"
-            />
-            {searchQuery && (
-                <button
-                    onClick={() => setSearchQuery('')}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                >
-                    <X size={16} />
-                </button>
-            )}
-        </div>
-
-        {/* Status Filter Chips */}
-        {showFilters && (
-            <div className="flex items-center gap-2 animate-in slide-in-from-top-2 fade-in duration-200">
-                <span className="text-xs font-bold text-slate-500 mr-2">Status:</span>
-                {statusOptions.map(({ value, label }) => (
-                    <button
-                        key={value}
-                        onClick={() => updateFilter('status', value)}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                            filters.status === value
-                            ? 'bg-primary-600 text-white shadow-md'
-                            : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
-                        }`}
-                    >
-                        {label}
-                    </button>
-                ))}
-            </div>
-        )}
-      </div>
+      <SearchFilterBar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        searchPlaceholder="Suchen nach Mandant, Datei oder Datum..."
+        showFilters={showFilters}
+        filterGroups={filterGroups}
+        currentFilters={filters}
+        onFilterChange={updateFilter}
+      />
 
       {/* Table Header */}
       <OverviewHeader gridClass={gridLayoutClass} />

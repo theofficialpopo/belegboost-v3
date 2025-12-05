@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: "010"
 tags: [performance, ux, frontend]
@@ -59,3 +59,12 @@ export default async function OverviewPage() {
 ### 2025-12-05 - Code Review Discovery
 **By:** Claude Code Review System
 **Actions:** Identified artificial loading delay degrading UX
+
+### 2025-12-05 - Issue Resolved
+**By:** Claude Code
+**Actions:** Removed all artificial delays from the application:
+- Overview.tsx: Removed 1500ms loading delay
+- Team.tsx: Removed 1200ms loading delay
+- SignUp.tsx: Removed 400ms step transition delay and 600ms subdomain check delay
+- constants/index.ts: Removed unused AUTH_SIMULATION_DELAY constant (800ms)
+**Result:** Users now see data immediately when available, improving perceived performance and Web Vitals metrics

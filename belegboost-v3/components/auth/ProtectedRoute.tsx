@@ -2,17 +2,17 @@
 
 import React, { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '../../lib/AuthContext';
 import { Loader2 } from 'lucide-react';
+import { useCurrentUser } from '../../hooks/useCurrentUser';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { isLoading, isAuthenticated } = useCurrentUser();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

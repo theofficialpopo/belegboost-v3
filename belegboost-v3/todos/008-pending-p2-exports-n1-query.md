@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p2
 issue_id: "008"
 tags: [performance, database, query-optimization]
@@ -64,3 +64,13 @@ export async function getExportsForOrg(organizationId: string, options?: {...}) 
 ### 2025-12-05 - Code Review Discovery
 **By:** Claude Code Review System
 **Actions:** Identified N+1 query pattern in exports function
+
+### 2025-12-05 - Performance Fix Applied
+**By:** Claude Code
+**Actions:**
+- Replaced `db.query.exports.findMany()` with explicit JOIN query using `db.select()`
+- Added `innerJoin(submissions, eq(exports.submissionId, submissions.id))` to filter at database level
+- Added `leftJoin(users, eq(exports.createdBy, users.id))` to include creator information
+- Moved organizationId filter to WHERE clause instead of JavaScript filter
+- Query now only fetches org-specific exports (90-99% reduction in rows fetched)
+**Result:** N+1 query eliminated, performance improved dramatically at scale

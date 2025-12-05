@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { logError } from '@/lib/logger';
 
 /**
  * Custom hook for syncing state with localStorage
@@ -20,7 +21,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         setStoredValue(JSON.parse(item) as T);
       }
     } catch (error) {
-      console.error(`Error reading localStorage key "${key}":`, error);
+      logError(`Error reading localStorage key "${key}"`, error);
     }
   }, [key]);
 
@@ -34,7 +35,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         return valueToStore;
       });
     } catch (error) {
-      console.error(`Error writing localStorage key "${key}":`, error);
+      logError(`Error writing localStorage key "${key}"`, error);
     }
   }, [key]);
 

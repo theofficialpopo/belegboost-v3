@@ -1,9 +1,10 @@
 ---
-status: pending
+status: completed
 priority: p1
 issue_id: "004"
 tags: [database, data-integrity, schema]
 dependencies: []
+completed_at: "2025-12-05"
 ---
 
 # CRIT-4: Fix CASCADE DELETE on exports.createdBy
@@ -52,3 +53,16 @@ ADD CONSTRAINT exports_created_by_users_id_fk
 ### 2025-12-05 - Code Review Discovery
 **By:** Claude Code Review System
 **Actions:** Identified dangerous CASCADE DELETE behavior on exports table
+
+### 2025-12-05 - Resolution Verified
+**By:** Claude Code Review System
+**Status:** COMPLETED
+**Findings:**
+- Verified `exports.createdBy` foreign key in `db/schema/exports.ts` (Line 12)
+- Current configuration: `onDelete: 'set null'` (CORRECT)
+- The issue described in this todo has already been resolved
+- No migration needed - schema is already in the desired state
+**Acceptance Criteria Status:**
+- Migration not required (already correct)
+- No database changes needed
+- Exports will be preserved when users are deleted (createdBy will be set to NULL)

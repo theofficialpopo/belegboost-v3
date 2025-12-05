@@ -2,12 +2,15 @@
 
 ## Overview
 
-This utility provides rate limiting for authentication endpoints to prevent brute force attacks.
+This utility provides rate limiting for authentication endpoints to prevent brute force attacks. It supports both **Redis-based distributed rate limiting** (production) and **in-memory fallback** (development).
 
 ## Key Features
 
+- **Dual mode operation**: Redis (production) or in-memory (development)
 - 5 login attempts per 15 minutes per IP address
-- Exponential backoff for repeated violations
+- 5 registration attempts per hour per IP address
+- Automatic mode detection via environment variables
+- Scales across multiple instances with Redis
 - Automatic cleanup of expired entries
 - Successful login resets the counter
 - Works with various proxy configurations
@@ -31,8 +34,8 @@ import {
 // Extract IP from request
 const clientIp = getClientIp(request.headers);
 
-// Check if request is allowed
-const result = checkAuthRateLimit(clientIp);
+// Check if request is allowed (async with Redis support)
+const result = await checkAuthRateLimit(clientIp);
 
 if (!result.success) {
   throw new RateLimitError(
@@ -44,8 +47,8 @@ if (!result.success) {
 
 // ... perform authentication ...
 
-// On success, reset the limit
-resetAuthRateLimit(clientIp);
+// On success, reset the limit (async with Redis support)
+await resetAuthRateLimit(clientIp);
 ```
 
 ## Monitoring
@@ -53,17 +56,34 @@ resetAuthRateLimit(clientIp);
 ```typescript
 import { getAuthRateLimitStats } from '@/lib/rate-limit';
 
-const stats = getAuthRateLimitStats();
+const stats = await getAuthRateLimitStats();
 console.log(stats);
 // { totalTracked: 42, rateLimited: 3 }
 ```
+
+## Environment Setup
+
+### Production (Redis Mode)
+
+Set these environment variables to enable distributed rate limiting:
+
+```bash
+UPSTASH_REDIS_REST_URL="https://your-redis-instance.upstash.io"
+UPSTASH_REDIS_REST_TOKEN="your-upstash-redis-token"
+```
+
+Get credentials from: https://console.upstash.com
+
+### Development (In-Memory Mode)
+
+Simply omit the Redis environment variables. The system will automatically fall back to in-memory storage.
 
 ## Configuration
 
 To change limits, modify the singleton initialization in `lib/rate-limit.ts`:
 
 ```typescript
-const authRateLimiter = new RateLimiter(
+const authRateLimiter = createRateLimiter(
   10,                   // maxAttempts: increase to 10
   20 * 60 * 1000        // windowMs: increase to 20 minutes
 );
@@ -111,15 +131,19 @@ Corporate networks or shared WiFi may cause legitimate users to share IPs. Consi
 
 ### Deployment Considerations
 
-This implementation uses **in-memory storage** and is suitable for:
+This implementation automatically adapts based on environment:
+
+**In-Memory Mode** (no Redis configured):
 - Single-instance deployments
 - Development environments
 - Small to medium traffic sites
+- No infrastructure dependencies
 
-For high-traffic or multi-instance deployments, migrate to:
-- Redis-based rate limiting
-- Distributed cache solutions
-- Dedicated rate limiting services (Upstash, Cloudflare)
+**Redis Mode** (Upstash Redis configured):
+- Multi-instance deployments (Vercel, serverless)
+- High-traffic production sites
+- Distributed systems requiring shared state
+- Rate limits persist across deployments and server restarts
 
 ## Security Notes
 

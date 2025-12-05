@@ -1,18 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { submissions, files } from '@/db/schema';
-import { uploadFile, validateFile } from '@/lib/storage';
+import { uploadFile, validateFile, deleteFile } from '@/lib/storage';
 import { auth } from '@/auth';
 import { logger } from '@/lib/logger';
-import { unauthorized, forbidden, badRequest, serverError } from '@/lib/api-errors';
+import { unauthorized, forbidden, badRequest, serverError, isDemoMode, demoModeReadOnly } from '@/lib/api-errors';
+import { withCsrfProtection } from '@/lib/csrf';
+import { logAudit } from '@/lib/audit';
 
-export async function POST(request: NextRequest) {
+export const POST = withCsrfProtection(async (request: NextRequest) => {
   try {
     // Check authentication
     const session = await auth();
 
     if (!session?.user) {
       return unauthorized();
+    }
+
+    // Prevent mutations in demo mode
+    if (isDemoMode(session.user.organizationId)) {
+      return demoModeReadOnly();
     }
 
     // Parse FormData
@@ -77,45 +84,28 @@ export async function POST(request: NextRequest) {
     };
     const providerLogo = providerLogoMap[provider] || 'generic';
 
-    // Wrap submission and file record creation in a transaction
-    // Note: File uploads to S3/R2 happen inside the transaction callback
-    // If any operation fails, both submission and file records will be rolled back
-    const result = await db.transaction(async (tx) => {
-      // Create submission record
-      const [submission] = await tx
-        .insert(submissions)
-        .values({
-          organizationId,
-          clientName,
-          clientNumber: clientNumber || null,
-          clientEmail,
-          provider,
-          providerLogo,
-          dateFrom: new Date(startDate),
-          dateTo: new Date(endDate),
-          endBalance: endBalance || null,
-          assignedAdvisor: selectedAdvisor || null,
-          status: 'new',
-          transactionCount: 0,
-        })
-        .returning();
+    // TWO-PHASE COMMIT PATTERN:
+    // Phase 1: Upload files to R2 BEFORE starting the database transaction
+    // Phase 2: Insert database records in a transaction
+    // If Phase 2 fails, clean up uploaded files (compensating transaction)
 
-      if (!submission) {
-        throw new Error('Failed to create submission');
-      }
+    // Track uploaded files for cleanup in case of transaction failure
+    const uploadedFiles: Array<{ s3Key: string; originalName: string; mimeType: string; sizeBytes: number }> = [];
 
-      // Upload files and collect file records
-      const fileRecords: Array<{ originalName: string; s3Key: string; mimeType: string; sizeBytes: number }> = [];
+    try {
+      // PHASE 1: Upload files to R2 storage (external system, cannot be rolled back)
+      // We generate a temporary submission ID for the S3 key path
+      const tempSubmissionId = crypto.randomUUID();
 
       // Upload data file
       if (dataFile) {
         const { s3Key, sizeBytes } = await uploadFile(dataFile, {
           organizationId,
-          submissionId: submission.id,
+          submissionId: tempSubmissionId,
         });
-        fileRecords.push({
-          originalName: dataFile.name,
+        uploadedFiles.push({
           s3Key,
+          originalName: dataFile.name,
           mimeType: dataFile.type,
           sizeBytes,
         });
@@ -125,39 +115,122 @@ export async function POST(request: NextRequest) {
       if (pdfFile) {
         const { s3Key, sizeBytes } = await uploadFile(pdfFile, {
           organizationId,
-          submissionId: submission.id,
+          submissionId: tempSubmissionId,
         });
-        fileRecords.push({
-          originalName: pdfFile.name,
+        uploadedFiles.push({
           s3Key,
+          originalName: pdfFile.name,
           mimeType: pdfFile.type,
           sizeBytes,
         });
       }
 
-      // Insert file records
-      if (fileRecords.length > 0) {
-        await tx.insert(files).values(
-          fileRecords.map(file => ({
-            submissionId: submission.id,
-            originalName: file.originalName,
+      // PHASE 2: Insert database records in a transaction
+      // If this fails, we'll clean up the uploaded files in the catch block
+      const result = await db.transaction(async (tx) => {
+        // Create submission record
+        const [submission] = await tx
+          .insert(submissions)
+          .values({
+            organizationId,
+            clientName,
+            clientNumber: clientNumber || null,
+            clientEmail,
+            provider,
+            providerLogo,
+            dateFrom: new Date(startDate),
+            dateTo: new Date(endDate),
+            endBalance: endBalance || null,
+            assignedAdvisor: selectedAdvisor || null,
+            status: 'new',
+            transactionCount: 0,
+          })
+          .returning();
+
+        if (!submission) {
+          throw new Error('Failed to create submission');
+        }
+
+        // Insert file records (linking uploaded files to the submission)
+        if (uploadedFiles.length > 0) {
+          await tx.insert(files).values(
+            uploadedFiles.map(file => ({
+              submissionId: submission.id,
+              originalName: file.originalName,
+              s3Key: file.s3Key,
+              mimeType: file.mimeType,
+              sizeBytes: file.sizeBytes,
+              parseStatus: 'pending' as const,
+            }))
+          );
+        }
+
+        // Log audit events for GDPR compliance
+        // Log submission creation
+        await logAudit(tx, request, {
+          organizationId,
+          userId: session.user.id,
+          action: 'submission_created',
+          resourceType: 'submission',
+          resourceId: submission.id,
+          metadata: {
+            clientName: submission.clientName,
+            clientEmail: submission.clientEmail,
+            provider: submission.provider,
+            dateFrom: submission.dateFrom.toISOString(),
+            dateTo: submission.dateTo.toISOString(),
+            fileCount: uploadedFiles.length,
+          },
+        });
+
+        // Log file uploads
+        for (const file of uploadedFiles) {
+          await logAudit(tx, request, {
+            organizationId,
+            userId: session.user.id,
+            action: 'file_uploaded',
+            resourceType: 'file',
+            resourceId: submission.id, // Link to submission
+            metadata: {
+              fileName: file.originalName,
+              mimeType: file.mimeType,
+              sizeBytes: file.sizeBytes,
+              submissionId: submission.id,
+            },
+          });
+        }
+
+        return { submissionId: submission.id };
+      });
+
+      // Success! Return the submission ID
+      return NextResponse.json({
+        success: true,
+        submissionId: result.submissionId,
+        message: 'Submission created successfully',
+      });
+
+    } catch (error) {
+      // COMPENSATING TRANSACTION: Clean up uploaded files if database transaction failed
+      // This prevents orphaned files in R2 storage
+      logger.error('Transaction failed, cleaning up uploaded files', { uploadedFiles });
+
+      for (const file of uploadedFiles) {
+        try {
+          await deleteFile(file.s3Key);
+          logger.info('Successfully deleted orphaned file', { s3Key: file.s3Key });
+        } catch (deleteError) {
+          // Log deletion errors but don't throw - we already have a main error
+          logger.error('Failed to delete orphaned file', {
             s3Key: file.s3Key,
-            mimeType: file.mimeType,
-            sizeBytes: file.sizeBytes,
-            parseStatus: 'pending' as const,
-          }))
-        );
+            error: deleteError
+          });
+        }
       }
 
-      return { submissionId: submission.id };
-    });
-
-    // Return success response with submission ID
-    return NextResponse.json({
-      success: true,
-      submissionId: result.submissionId,
-      message: 'Submission created successfully',
-    });
+      // Re-throw the original error
+      throw error;
+    }
 
   } catch (error) {
     logger.error('Error creating submission', error);
@@ -166,4 +239,4 @@ export async function POST(request: NextRequest) {
       error instanceof Error ? error.message : 'Unknown error'
     );
   }
-}
+});

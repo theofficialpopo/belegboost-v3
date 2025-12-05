@@ -18,5 +18,3 @@ export const TOAST_DEFAULTS = {
   DURATION: 5000,
   MAX_TOASTS: 5,
 } as const;
-
-export const AUTH_SIMULATION_DELAY = 800; // milliseconds

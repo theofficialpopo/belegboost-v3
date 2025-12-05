@@ -1,5 +1,6 @@
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { nanoid } from 'nanoid';
+import { logInfo, logError, logWarn } from '@/lib/logger';
 
 // File validation constants
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -117,7 +118,7 @@ export async function uploadFileToR2(
 
   // If R2 is not configured, use fallback placeholder
   if (!config) {
-    console.warn('R2 storage not configured. Using placeholder for development.');
+    logWarn('R2 storage not configured. Using placeholder for development.');
     const s3Key = generateS3Key(organizationId, submissionId, file.name);
     return { s3Key, sizeBytes: file.size };
   }
@@ -150,14 +151,14 @@ export async function uploadFileToR2(
 
     await s3Client.send(command);
 
-    console.log(`File uploaded successfully to R2: ${s3Key}`);
+    logInfo('File uploaded successfully to R2', { s3Key });
 
     return {
       s3Key,
       sizeBytes: file.size,
     };
   } catch (error) {
-    console.error('Error uploading file to R2:', error);
+    logError('Error uploading file to R2', error);
     throw new Error(
       `Failed to upload file to storage: ${error instanceof Error ? error.message : 'Unknown error'}`
     );
@@ -173,4 +174,41 @@ export async function uploadFile(
   }
 ): Promise<{ s3Key: string; sizeBytes: number }> {
   return uploadFileToR2(file, metadata.organizationId, metadata.submissionId);
+}
+
+// Delete file from R2 storage
+export async function deleteFileFromR2(s3Key: string): Promise<void> {
+  // Get storage configuration
+  const config = getStorageConfig();
+
+  // If R2 is not configured, skip deletion (development mode)
+  if (!config) {
+    logWarn('R2 storage not configured. Skipping file deletion for development.');
+    return;
+  }
+
+  // Create S3 client
+  const s3Client = createS3Client(config);
+
+  try {
+    // Delete from R2
+    const command = new DeleteObjectCommand({
+      Bucket: config.bucketName,
+      Key: s3Key,
+    });
+
+    await s3Client.send(command);
+
+    logInfo('File deleted successfully from R2', { s3Key });
+  } catch (error) {
+    logError('Error deleting file from R2', error);
+    throw new Error(
+      `Failed to delete file from storage: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
+  }
+}
+
+// Export a generic delete function that handles the storage abstraction
+export async function deleteFile(s3Key: string): Promise<void> {
+  return deleteFileFromR2(s3Key);
 }

@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import Button from '../ui/Button';
 import AuthLayout from './AuthLayout';
 import { Mail, Lock, Loader2 } from 'lucide-react';
 import IconInput from '../ui/IconInput';
-import { useAuth } from '../../lib/AuthContext';
 import { useToast } from '../../lib/ToastContext';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -23,7 +23,6 @@ type SignInFormData = z.infer<typeof signInSchema>;
 const SignIn = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login } = useAuth();
   const { addToast } = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -36,13 +35,18 @@ const SignIn = () => {
     setIsLoading(true);
 
     try {
-      const result = await login(data.email, data.password);
+      // Use NextAuth signIn directly (single source of truth)
+      const result = await signIn('credentials', {
+        email: data.email,
+        password: data.password,
+        redirect: false,
+      });
 
-      if (result.error) {
+      if (result?.error) {
         addToast({
           type: 'error',
           title: 'Fehler bei der Anmeldung',
-          message: result.error
+          message: 'Ungültige Anmeldedaten'
         });
         return;
       }

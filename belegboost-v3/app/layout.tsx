@@ -4,7 +4,6 @@ import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 import { ThemeProvider } from "../components/providers/ThemeProvider";
 import { ColorThemeProvider } from "../lib/ColorThemeContext";
-import { AuthProvider } from "../lib/AuthContext";
 import { ToastProvider } from "../lib/ToastContext";
 import GlobalToasts from "../components/ui/GlobalToasts";
 
@@ -48,12 +47,10 @@ export default function RootLayout({
           <ColorThemeProvider>
             {/* NextAuth SessionProvider - single source of truth for authentication */}
             <SessionProvider>
-              <AuthProvider>
-                <ToastProvider>
-                  {children}
-                  <GlobalToasts />
-                </ToastProvider>
-              </AuthProvider>
+              <ToastProvider>
+                {children}
+                <GlobalToasts />
+              </ToastProvider>
             </SessionProvider>
           </ColorThemeProvider>
         </ThemeProvider>

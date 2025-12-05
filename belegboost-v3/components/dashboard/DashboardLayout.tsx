@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 import Link from 'next/link';
 import {
   LayoutDashboard,
@@ -13,7 +14,7 @@ import {
   FileText
 } from 'lucide-react';
 import ThemeSelector from '../ui/ThemeSelector';
-import { useAuth } from '../../lib/AuthContext';
+import { useCurrentUser } from '../../hooks/useCurrentUser';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -29,7 +30,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user } = useCurrentUser();
 
   // Determine base path: /demo/dashboard or /[slug]/dashboard
   const getBasePath = useCallback(() => {
@@ -50,10 +51,16 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     path: `${basePath}/${item.segment}`,
   }));
 
-  const handleLogout = useCallback(() => {
-    logout();
+  const handleLogout = useCallback(async () => {
+    // In demo mode, just redirect (no session to clear)
+    if (pathname.startsWith('/demo/')) {
+      router.push('/');
+      return;
+    }
+    // In production mode, sign out from NextAuth
+    await signOut({ redirect: false });
     router.push('/');
-  }, [logout, router]);
+  }, [router, pathname]);
 
   const isPathActive = useCallback((path: string) => {
     return pathname.startsWith(path);

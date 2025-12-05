@@ -1,13 +1,11 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
+import { getEnvVar } from '@/lib/env-validation';
 
-// Connection string from environment
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-  throw new Error('DATABASE_URL environment variable is not set');
-}
+// Connection string from environment with validation
+// This will throw a clear error message if DATABASE_URL is not set
+const connectionString = getEnvVar('DATABASE_URL');
 
 // Create postgres connection
 // For production: max 10 connections, for dev: max 1

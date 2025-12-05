@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { organizations } from '@/db/schema';
 import { OrganizationProvider, Organization } from '@/lib/OrganizationContext';
-import { AuthProvider } from '@/lib/AuthContext';
+import { DemoModeProvider } from '@/lib/DemoModeContext';
 
 interface OrgLayoutProps {
   children: React.ReactNode;
@@ -48,10 +48,10 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   const { slug } = await params;
   const isDemoMode = slug === 'demo';
 
-  // For demo mode, use mock data and wrap with AuthProvider in demo mode
+  // For demo mode, use mock data and wrap with DemoModeProvider
   if (isDemoMode) {
     return (
-      <AuthProvider mode="demo">
+      <DemoModeProvider>
         <OrganizationProvider organization={demoOrganization}>
           {/* Demo mode banner */}
           <div className="bg-amber-500 text-white text-center py-2 px-4 text-sm font-medium">
@@ -59,7 +59,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
           </div>
           {children}
         </OrganizationProvider>
-      </AuthProvider>
+      </DemoModeProvider>
     );
   }
 

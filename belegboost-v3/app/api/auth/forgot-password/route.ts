@@ -4,8 +4,9 @@ import { db } from '@/db';
 import { users } from '@/db/schema';
 import { randomUUID } from 'crypto';
 import { logger } from '@/lib/logger';
+import { withCsrfProtection } from '@/lib/csrf';
 
-export async function POST(request: NextRequest) {
+export const POST = withCsrfProtection(async (request: NextRequest) => {
   try {
     const body = await request.json();
     const { email } = body;
@@ -44,11 +45,30 @@ export async function POST(request: NextRequest) {
 
       // Log the reset link for development
       // In production, this would be sent via email
-      const resetUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
-      logger.info('Password reset link generated', { email, resetUrl, resetExpires: resetExpires.toISOString() });
+      const resetUrl = `${process.env.AUTH_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
+
+      // Only log sensitive data in development mode
+      if (process.env.NODE_ENV === 'development') {
+        logger.info('Password reset link generated (DEV ONLY)', {
+          email,
+          resetUrl,
+          resetExpires: resetExpires.toISOString()
+        });
+      } else {
+        logger.info('Password reset initiated', {
+          email: email.replace(/(.{2}).*(@.*)/, '$1***$2'), // Partial masking
+          resetExpires: resetExpires.toISOString()
+        });
+      }
     } else {
       // Log attempt for non-existent email (for monitoring purposes)
-      logger.info('Password reset requested for non-existent email', { email });
+      if (process.env.NODE_ENV === 'development') {
+        logger.info('Password reset requested for non-existent email (DEV ONLY)', { email });
+      } else {
+        logger.info('Password reset requested for non-existent email', {
+          email: email.replace(/(.{2}).*(@.*)/, '$1***$2') // Partial masking
+        });
+      }
     }
 
     // Always return success response
@@ -66,4 +86,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+});

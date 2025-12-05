@@ -7,6 +7,7 @@ import IconInput from '../../ui/IconInput';
 import { TeamMember as DBTeamMember } from '@/db/schema/team-members';
 import { User, Mail, Briefcase, Eye, EyeOff, ShieldAlert, Users, Crown, Lock } from 'lucide-react';
 import { useToast } from '../../../lib/ToastContext';
+import { logError } from '@/lib/logger';
 
 interface TeamEditModalProps {
   member: DBTeamMember | null;
@@ -97,7 +98,7 @@ const TeamEditModal = ({ member, isOpen, onClose, onMemberDeleted }: TeamEditMod
       window.location.reload();
 
     } catch (error) {
-      console.error('Error saving team member:', error);
+      logError('Error saving team member', error);
       addToast({
         type: 'error',
         title: 'Fehler',

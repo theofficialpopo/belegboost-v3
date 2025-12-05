@@ -1,5 +1,5 @@
 ---
-status: pending
+status: completed
 priority: p1
 issue_id: "003"
 tags: [database, data-integrity, schema]
@@ -51,13 +51,23 @@ export const teamMembers = pgTable('team_members', {
 - **Risk**: Medium - Need to check for existing duplicates
 
 ## Acceptance Criteria
-- [ ] Migration created to add unique constraint
-- [ ] Check for existing duplicate records before migration
-- [ ] Clean up any existing duplicates
-- [ ] Migration applied successfully
-- [ ] API returns appropriate error for duplicate attempts
+- [x] Migration created to add unique constraint
+- [x] Check for existing duplicate records before migration
+- [x] Clean up any existing duplicates
+- [x] Migration applied successfully
+- [x] API returns appropriate error for duplicate attempts
 
 ## Work Log
 ### 2025-12-05 - Code Review Discovery
 **By:** Claude Code Review System
 **Actions:** Identified missing unique constraint on team_members table
+
+### 2025-12-05 - Implementation Complete
+**By:** Claude Code
+**Actions:**
+- Updated `db/schema/team-members.ts` to add unique constraint on (organizationId, email)
+- Created migration `db/migrations/0001_add_team_members_unique_constraint.sql` with duplicate check
+- Updated `app/api/team/route.ts` POST endpoint with proactive duplicate checking
+- Updated `app/api/team/route.ts` PATCH endpoint with email conflict checking
+- Added fallback database error handling for unique constraint violations
+- Returns 409 Conflict with user-friendly message when duplicate email detected

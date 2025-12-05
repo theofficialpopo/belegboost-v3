@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, boolean, timestamp, pgEnum, index } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, boolean, timestamp, pgEnum, index, unique } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { organizations } from './organizations';
 import { teamRoleEnum } from './users';
@@ -19,6 +19,7 @@ export const teamMembers = pgTable('team_members', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => [
   index('team_members_org_idx').on(table.organizationId),
+  unique('team_members_org_email_unique').on(table.organizationId, table.email),
 ]);
 
 export const teamMembersRelations = relations(teamMembers, ({ one }) => ({

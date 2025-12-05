@@ -8,6 +8,7 @@ import { CreditCard, ArrowRight, LayoutList, List } from 'lucide-react';
 import SubmissionOverviewTab from './submission/SubmissionOverviewTab';
 import SubmissionTransactionsTab from './submission/SubmissionTransactionsTab';
 import { useToastActions } from '../../../lib/ToastContext';
+import { logError } from '@/lib/logger';
 
 interface SubmissionDetailModalProps {
   submission: Submission | null;
@@ -57,7 +58,7 @@ const SubmissionDetailModal = ({ submission, isOpen, onClose }: SubmissionDetail
 
       onClose();
     } catch (error) {
-      console.error('Error saving submission:', error);
+      logError('Error saving submission', error);
       addToast({
         type: 'error',
         title: 'Fehler beim Speichern',

@@ -9,6 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { logError, logWarn } from '@/lib/logger';
 
 /**
  * Get allowed origins from environment variable
@@ -31,14 +32,14 @@ function getAllowedOrigins(): string[] {
   }
 
   // In production, ALLOWED_ORIGINS must be explicitly set
-  // If not set, only allow the NEXTAUTH_URL
-  const nextAuthUrl = process.env.NEXTAUTH_URL;
-  if (nextAuthUrl) {
+  // If not set, only allow the AUTH_URL
+  const authUrl = process.env.AUTH_URL;
+  if (authUrl) {
     try {
-      const url = new URL(nextAuthUrl);
+      const url = new URL(authUrl);
       return [url.origin];
     } catch {
-      console.error('Invalid NEXTAUTH_URL:', nextAuthUrl);
+      logError('Invalid AUTH_URL', { authUrl });
     }
   }
 
@@ -81,7 +82,7 @@ export function validateCsrf(request: NextRequest): NextResponse | null {
 
   // If no origin header is present, reject the request
   if (!requestOrigin) {
-    console.warn('CSRF validation failed: No Origin or Referer header present');
+    logWarn('CSRF validation failed: No Origin or Referer header present');
     return NextResponse.json(
       { error: 'Invalid request origin' },
       { status: 403 }
@@ -90,7 +91,7 @@ export function validateCsrf(request: NextRequest): NextResponse | null {
 
   // If no allowed origins are configured, reject
   if (allowedOrigins.length === 0) {
-    console.error('CSRF validation failed: No allowed origins configured');
+    logError('CSRF validation failed: No allowed origins configured');
     return NextResponse.json(
       { error: 'Server configuration error' },
       { status: 500 }
@@ -103,10 +104,7 @@ export function validateCsrf(request: NextRequest): NextResponse | null {
   });
 
   if (!isAllowed) {
-    console.warn(
-      'CSRF validation failed: Origin not allowed',
-      { requestOrigin, allowedOrigins }
-    );
+    logWarn('CSRF validation failed: Origin not allowed', { requestOrigin, allowedOrigins });
     return NextResponse.json(
       { error: 'Invalid request origin' },
       { status: 403 }

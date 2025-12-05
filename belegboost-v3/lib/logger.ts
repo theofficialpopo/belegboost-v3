@@ -15,6 +15,7 @@ const SENSITIVE_FIELDS = [
   'token',
   'resetToken',
   'passwordResetToken',
+  'resetUrl',
   'accessToken',
   'refreshToken',
   'apiKey',

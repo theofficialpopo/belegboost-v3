@@ -1,4 +1,4 @@
-import { pgTable, uuid, varchar, jsonb, timestamp, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, varchar, jsonb, timestamp, pgEnum, index } from 'drizzle-orm/pg-core';
 
 export const planEnum = pgEnum('plan', ['starter', 'professional', 'enterprise']);
 
@@ -20,7 +20,9 @@ export const organizations = pgTable('organizations', {
   plan: planEnum('plan').notNull().default('starter'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
-});
+}, (table) => [
+  index('organizations_subdomain_idx').on(table.subdomain),
+]);
 
 export type Organization = typeof organizations.$inferSelect;
 export type NewOrganization = typeof organizations.$inferInsert;

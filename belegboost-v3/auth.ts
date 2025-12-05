@@ -36,7 +36,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req) => {
           }
 
           // Check rate limit before processing authentication
-          const rateLimitResult = checkAuthRateLimit(clientIp);
+          const rateLimitResult = await checkAuthRateLimit(clientIp);
 
           if (!rateLimitResult.success) {
             const retryAfterSeconds = Math.ceil(
@@ -75,7 +75,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req) => {
           }
 
           // Successful login - reset rate limit for this IP
-          resetAuthRateLimit(clientIp);
+          await resetAuthRateLimit(clientIp);
 
           // Update last login
           await db

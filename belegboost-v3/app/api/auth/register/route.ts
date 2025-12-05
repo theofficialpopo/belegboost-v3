@@ -11,16 +11,16 @@ import {
 } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 import { registerSchema } from '@/lib/validations/auth';
-import { validateCsrf } from '@/lib/csrf';
+import { withCsrfProtection } from '@/lib/csrf';
 import { badRequest, conflict, serverError } from '@/lib/api-errors';
 
-export async function POST(request: NextRequest) {
+export const POST = withCsrfProtection(async (request: NextRequest) => {
   try {
     // Extract IP address for rate limiting
     const clientIp = getClientIp(request.headers);
 
     // Check rate limit before processing registration
-    const rateLimitResult = checkRegistrationRateLimit(clientIp);
+    const rateLimitResult = await checkRegistrationRateLimit(clientIp);
 
     if (!rateLimitResult.success) {
       const retryAfterSeconds = Math.ceil(
@@ -53,33 +53,31 @@ export async function POST(request: NextRequest) {
 
     const { name, email, password, companyName, subdomain } = validationResult.data;
 
-    // NOTE: Organization lookup by subdomain is intentionally not org-scoped
-    // This is the registration flow where we're checking subdomain availability
-    // No organization context exists yet for the new user
-    const existingOrg = await db.query.organizations.findFirst({
-      where: eq(organizations.subdomain, subdomain),
-    });
-
-    if (existingOrg) {
-      return conflict('Subdomain already taken', 'subdomain');
-    }
-
-    // NOTE: User lookup by email is intentionally not org-scoped
-    // This is the registration flow checking for duplicate emails across all orgs
-    // No organization context exists yet for the new user
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, email),
-    });
-
-    if (existingUser) {
-      return conflict('Email already registered', 'email');
-    }
-
-    // Hash password with bcryptjs (12 rounds)
+    // Hash password with bcryptjs (12 rounds) before transaction
     const passwordHash = await bcrypt.hash(password, 12);
 
-    // Create organization and user in a transaction
+    // Create organization and user in a transaction with uniqueness checks
+    // NOTE: Checks are INSIDE transaction to prevent race conditions
     const result = await db.transaction(async (tx) => {
+      // Check subdomain availability INSIDE transaction
+      // This prevents race condition where two requests check simultaneously
+      const existingOrg = await tx.query.organizations.findFirst({
+        where: eq(organizations.subdomain, subdomain),
+      });
+
+      if (existingOrg) {
+        throw new Error('CONFLICT_SUBDOMAIN');
+      }
+
+      // Check email availability INSIDE transaction
+      const existingUser = await tx.query.users.findFirst({
+        where: eq(users.email, email),
+      });
+
+      if (existingUser) {
+        throw new Error('CONFLICT_EMAIL');
+      }
+
       // Create organization first
       const [newOrg] = await tx
         .insert(organizations)
@@ -116,7 +114,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Successful registration - reset rate limit for this IP
-    resetRegistrationRateLimit(clientIp);
+    await resetRegistrationRateLimit(clientIp);
 
     // Return success response with organization slug
     return NextResponse.json(
@@ -134,14 +132,30 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     logger.error('Registration error', error);
 
-    // Handle database errors
+    // Handle specific conflict errors from transaction
     if (error instanceof Error) {
-      // Check for unique constraint violations
-      if (error.message.includes('unique constraint')) {
+      if (error.message === 'CONFLICT_SUBDOMAIN') {
+        return conflict('Subdomain already taken', 'subdomain');
+      }
+      if (error.message === 'CONFLICT_EMAIL') {
+        return conflict('Email already registered', 'email');
+      }
+
+      // Handle database unique constraint violations (fallback safety net)
+      // These should not occur if checks inside transaction work correctly
+      if (error.message.includes('unique constraint') || error.message.includes('duplicate key')) {
+        // Parse the error to determine which field caused the conflict
+        if (error.message.includes('subdomain')) {
+          return conflict('Subdomain already taken', 'subdomain');
+        }
+        if (error.message.includes('email')) {
+          return conflict('Email already registered', 'email');
+        }
+        // Generic conflict if we can't determine the specific field
         return conflict('Email or subdomain already exists');
       }
     }
 
     return serverError('Internal server error. Please try again later.');
   }
-}
+});

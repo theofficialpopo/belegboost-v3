@@ -5,11 +5,14 @@ import { teamMembers } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getTeamMemberForOrg } from '@/lib/db-helpers';
 import { logger } from '@/lib/logger';
+import { withCsrfProtection } from '@/lib/csrf';
+import { isDemoMode, demoModeReadOnly } from '@/lib/api-errors';
+import { logAudit } from '@/lib/audit';
 
-export async function DELETE(
+export const DELETE = withCsrfProtection(async (
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   try {
     // Authenticate user
     const session = await auth();
@@ -18,6 +21,11 @@ export async function DELETE(
         { error: 'Nicht authentifiziert' },
         { status: 401 }
       );
+    }
+
+    // Prevent mutations in demo mode
+    if (isDemoMode(session.user.organizationId)) {
+      return demoModeReadOnly();
     }
 
     // Check if user has permission (owner or admin)
@@ -49,15 +57,33 @@ export async function DELETE(
       );
     }
 
-    // Delete the member (hard delete)
-    await db
-      .delete(teamMembers)
-      .where(
-        and(
-          eq(teamMembers.id, id),
-          eq(teamMembers.organizationId, session.user.organizationId)
-        )
-      );
+    // Delete the member and log audit event in a transaction
+    await db.transaction(async (tx) => {
+      // Delete the member (hard delete)
+      await tx
+        .delete(teamMembers)
+        .where(
+          and(
+            eq(teamMembers.id, id),
+            eq(teamMembers.organizationId, session.user.organizationId)
+          )
+        );
+
+      // Log audit event for GDPR compliance
+      await logAudit(tx, request, {
+        organizationId: session.user.organizationId,
+        userId: session.user.id,
+        action: 'team_member_removed',
+        resourceType: 'team_member',
+        resourceId: id,
+        metadata: {
+          email: member.email,
+          name: member.name,
+          role: member.role,
+          removedBy: session.user.email,
+        },
+      });
+    });
 
     return NextResponse.json(
       { success: true, message: 'Mitarbeiter erfolgreich gelöscht' },
@@ -70,4 +96,4 @@ export async function DELETE(
       { status: 500 }
     );
   }
-}
+});
