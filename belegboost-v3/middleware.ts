@@ -1,5 +1,6 @@
-import { auth } from '@/auth';
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+import { auth } from '@/auth';
 
 // Reserved paths that should NOT be treated as org slugs (demo is now handled as a special org slug)
 const RESERVED_PATHS = [
@@ -9,8 +10,8 @@ const RESERVED_PATHS = [
   'ueber-uns', 'dokumentation', 'api-referenz', 'sicherheit'
 ];
 
-export default auth((req) => {
-  const { pathname } = req.nextUrl;
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
   const segments = pathname.split('/').filter(Boolean);
   const firstSegment = segments[0];
 
@@ -28,11 +29,11 @@ export default auth((req) => {
     if (urlSlug === 'demo') {
       // Disable demo mode in production
       if (process.env.NODE_ENV === 'production' && process.env.ENABLE_DEMO_MODE !== 'true') {
-        return NextResponse.redirect(new URL('/login', req.url));
+        return NextResponse.redirect(new URL('/login', request.url));
       }
 
       // Allow GET requests (read-only)
-      if (req.method === 'GET') {
+      if (request.method === 'GET') {
         return NextResponse.next();
       }
 
@@ -46,32 +47,38 @@ export default auth((req) => {
       );
     }
 
+    // Get session for protected routes
+    const session = await auth();
+
     // Not authenticated - redirect to login
-    if (!req.auth) {
-      const loginUrl = new URL('/login', req.url);
+    if (!session) {
+      const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('from', pathname);
       return NextResponse.redirect(loginUrl);
     }
 
-    const userSlug = req.auth.user?.organizationSlug;
+    const userSlug = session.user?.organizationSlug;
 
     // User doesn't belong to this organization
     if (userSlug && urlSlug !== userSlug) {
       // Redirect to their own org's dashboard
-      return NextResponse.redirect(new URL(`/${userSlug}/dashboard`, req.url));
+      return NextResponse.redirect(new URL(`/${userSlug}/dashboard`, request.url));
     }
   }
 
+  // Get session for auth page redirects
+  const session = await auth();
+
   // Auth pages - redirect authenticated users to their dashboard
-  if (req.auth && (pathname === '/login' || pathname === '/signup')) {
-    const userSlug = req.auth.user?.organizationSlug;
+  if (session && (pathname === '/login' || pathname === '/signup')) {
+    const userSlug = session.user?.organizationSlug;
     if (userSlug) {
-      return NextResponse.redirect(new URL(`/${userSlug}/dashboard`, req.url));
+      return NextResponse.redirect(new URL(`/${userSlug}/dashboard`, request.url));
     }
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
