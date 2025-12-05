@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+/* Enable class-based dark mode (Tailwind v4) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* BelegBoost Theme Configuration */
+@theme {
+  /* Font */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* Primary colors (Emerald default) */
+  --color-primary-50: oklch(0.98 0.02 160);
+  --color-primary-100: oklch(0.95 0.05 160);
+  --color-primary-200: oklch(0.90 0.10 160);
+  --color-primary-300: oklch(0.82 0.16 160);
+  --color-primary-400: oklch(0.74 0.18 160);
+  --color-primary-500: oklch(0.65 0.19 160);
+  --color-primary-600: oklch(0.55 0.18 160);
+  --color-primary-700: oklch(0.45 0.15 160);
+  --color-primary-800: oklch(0.38 0.12 160);
+  --color-primary-900: oklch(0.30 0.10 160);
+  --color-primary-950: oklch(0.22 0.08 160);
+
+  /* Animation keyframes */
+  --animate-spin: spin 1s linear infinite;
+  --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Theme variants using data attributes */
+[data-theme="emerald"] {
+  --color-primary-50: oklch(0.98 0.02 160);
+  --color-primary-100: oklch(0.95 0.05 160);
+  --color-primary-200: oklch(0.90 0.10 160);
+  --color-primary-300: oklch(0.82 0.16 160);
+  --color-primary-400: oklch(0.74 0.18 160);
+  --color-primary-500: oklch(0.65 0.19 160);
+  --color-primary-600: oklch(0.55 0.18 160);
+  --color-primary-700: oklch(0.45 0.15 160);
+  --color-primary-800: oklch(0.38 0.12 160);
+  --color-primary-900: oklch(0.30 0.10 160);
+  --color-primary-950: oklch(0.22 0.08 160);
+}
+
+[data-theme="ocean"] {
+  --color-primary-50: oklch(0.97 0.02 240);
+  --color-primary-100: oklch(0.93 0.05 240);
+  --color-primary-200: oklch(0.88 0.10 240);
+  --color-primary-300: oklch(0.78 0.15 240);
+  --color-primary-400: oklch(0.68 0.18 240);
+  --color-primary-500: oklch(0.58 0.20 240);
+  --color-primary-600: oklch(0.50 0.18 240);
+  --color-primary-700: oklch(0.42 0.15 240);
+  --color-primary-800: oklch(0.35 0.12 240);
+  --color-primary-900: oklch(0.28 0.10 240);
+  --color-primary-950: oklch(0.20 0.08 240);
+}
+
+[data-theme="violet"] {
+  --color-primary-50: oklch(0.98 0.02 280);
+  --color-primary-100: oklch(0.94 0.05 280);
+  --color-primary-200: oklch(0.88 0.10 280);
+  --color-primary-300: oklch(0.78 0.16 280);
+  --color-primary-400: oklch(0.68 0.20 280);
+  --color-primary-500: oklch(0.58 0.22 280);
+  --color-primary-600: oklch(0.50 0.20 280);
+  --color-primary-700: oklch(0.42 0.16 280);
+  --color-primary-800: oklch(0.35 0.12 280);
+  --color-primary-900: oklch(0.28 0.10 280);
+  --color-primary-950: oklch(0.20 0.08 280);
+}
+
+/* Dark mode base */
+.dark {
+  color-scheme: dark;
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: oklch(0.7 0 0 / 0.3);
+  border-radius: 3px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.6 0 0 / 0.5);
+}
+
+/* Base body styles */
+body {
+  @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50;
+  font-family: var(--font-sans);
+}
+
+/* Animation utilities */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* animate-in utility for slide/fade animations */
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: var(--tw-enter-translate-x, 0) var(--tw-enter-translate-y, 0) var(--tw-enter-scale, 1);
+  }
+}
+
+.animate-in {
+  animation: enter 0.3s ease forwards;
+}
+
+.slide-in-from-bottom-4 {
+  --tw-enter-translate-y: 1rem;
+}
+
+.slide-in-from-right-4 {
+  --tw-enter-translate-x: 1rem;
+}
+
+.slide-in-from-left-4 {
+  --tw-enter-translate-x: -1rem;
+}
+
+.slide-in-from-top-2 {
+  --tw-enter-translate-y: -0.5rem;
+}
+
+.fade-in {
+  animation-name: enter;
+}
+
+.zoom-in {
+  --tw-enter-scale: 0.95;
+}
+
+.duration-300 {
+  animation-duration: 300ms;
+}
+
+.duration-500 {
+  animation-duration: 500ms;
+}
+
+.duration-200 {
+  animation-duration: 200ms;
+}

@@ -1,0 +1,58 @@
+'use client';
+
+import React, { forwardRef } from 'react';
+import type { LucideIcon } from 'lucide-react';
+
+interface IconInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
+  label?: string;
+  icon?: LucideIcon;
+  rightElement?: React.ReactNode;
+  containerClassName?: string;
+  error?: string;
+}
+
+const IconInput = forwardRef<HTMLInputElement, IconInputProps>(({
+  label,
+  icon: Icon,
+  rightElement,
+  containerClassName = '',
+  className = '',
+  error,
+  ...props
+}, ref) => {
+  return (
+    <div className={containerClassName}>
+      {label && (
+        <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+          {label}
+        </label>
+      )}
+      <div className="relative">
+        {Icon && (
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <Icon size={18} />
+          </div>
+        )}
+        <input
+          ref={ref}
+          className={`w-full ${Icon ? 'pl-10' : 'pl-4'} ${rightElement ? 'pr-32' : 'pr-4'} py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 border focus:ring-2 focus:border-transparent outline-none transition-all text-slate-900 dark:text-white ${
+            error
+              ? 'border-red-300 focus:ring-red-500'
+              : 'border-slate-200 dark:border-slate-700 focus:ring-primary-500'
+          } ${className}`}
+          {...props}
+        />
+        {rightElement && (
+          <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
+            {rightElement}
+          </div>
+        )}
+      </div>
+      {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
+    </div>
+  );
+});
+
+IconInput.displayName = 'IconInput';
+
+export default IconInput;
