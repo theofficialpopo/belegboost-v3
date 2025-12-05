@@ -35,7 +35,7 @@ const Overview: React.FC<OverviewProps> = ({ submissions }) => {
       const searchLower = search.toLowerCase();
       const matchesSearch =
         sub.clientName.toLowerCase().includes(searchLower) ||
-        sub.clientNumber.includes(search) ||
+        (sub.clientNumber?.includes(search) ?? false) ||
         sub.provider.toLowerCase().includes(searchLower);
 
       const matchesStatus = f.status === 'all' || sub.status === f.status;

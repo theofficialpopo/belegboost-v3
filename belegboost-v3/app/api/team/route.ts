@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: 'Validation error', details: error.issues },
         { status: 400 }
       );
     }
@@ -115,13 +115,12 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Fetch existing member to check permissions
-    const existingMember = await db.query.teamMembers.findFirst({
-      where: and(
-        eq(teamMembers.id, validatedData.id),
-        eq(teamMembers.organizationId, session.user.organizationId)
-      ),
-    });
+    // Use db-helper to fetch existing member with org-scoped enforcement
+    const { getTeamMemberForOrg } = await import('@/lib/db-helpers');
+    const existingMember = await getTeamMemberForOrg(
+      validatedData.id,
+      session.user.organizationId
+    );
 
     if (!existingMember) {
       return NextResponse.json(
@@ -178,7 +177,7 @@ export async function PATCH(request: NextRequest) {
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: error.errors },
+        { error: 'Validation error', details: error.issues },
         { status: 400 }
       );
     }

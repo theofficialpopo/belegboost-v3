@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db } from '@/db';
 import { teamMembers } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { getTeamMemberForOrg } from '@/lib/db-helpers';
 
 export async function DELETE(
   request: NextRequest,
@@ -29,13 +30,8 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Verify the member exists and belongs to the user's organization
-    const member = await db.query.teamMembers.findFirst({
-      where: and(
-        eq(teamMembers.id, id),
-        eq(teamMembers.organizationId, session.user.organizationId)
-      ),
-    });
+    // Use db-helper to verify member exists and belongs to the user's organization
+    const member = await getTeamMemberForOrg(id, session.user.organizationId);
 
     if (!member) {
       return NextResponse.json(

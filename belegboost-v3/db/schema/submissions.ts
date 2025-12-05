@@ -43,6 +43,8 @@ export const submissions = pgTable('submissions', {
   index('submissions_org_idx').on(table.organizationId),
   index('submissions_status_idx').on(table.status),
   index('submissions_received_idx').on(table.receivedAt),
+  // Composite index for the most common query pattern (org-scoped, filtered by status, ordered by date)
+  index('submissions_org_status_received_idx').on(table.organizationId, table.status, table.receivedAt),
 ]);
 
 export const submissionsRelations = relations(submissions, ({ one }) => ({

@@ -9,7 +9,7 @@ export const exportFormatEnum = pgEnum('export_format', ['datev_csv', 'datev_xml
 export const exports = pgTable('exports', {
   id: uuid('id').primaryKey().defaultRandom(),
   submissionId: uuid('submission_id').notNull().references(() => submissions.id, { onDelete: 'cascade' }),
-  createdBy: uuid('created_by').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdBy: uuid('created_by').references(() => users.id, { onDelete: 'set null' }),
 
   // Export details
   format: exportFormatEnum('format').notNull().default('datev_csv'),

@@ -1,9 +1,9 @@
 import { auth } from '@/auth';
 import { NextResponse } from 'next/server';
 
-// Reserved paths that should NOT be treated as org slugs
+// Reserved paths that should NOT be treated as org slugs (demo is now handled as a special org slug)
 const RESERVED_PATHS = [
-  'demo', 'login', 'signup', 'forgot-password',
+  'login', 'signup', 'forgot-password',
   'api', '_next', 'favicon.ico', 'features', 'pricing', 'docs', 'preise',
   'blog', 'kontakt', 'karriere', 'integrationen', 'integration', 'agb', 'datenschutz', 'impressum',
   'ueber-uns', 'dokumentation', 'api-referenz', 'sicherheit'
@@ -14,20 +14,20 @@ export default auth((req) => {
   const segments = pathname.split('/').filter(Boolean);
   const firstSegment = segments[0];
 
-  // Skip demo routes - anyone can access /demo/*
-  if (pathname.startsWith('/demo')) {
-    return NextResponse.next();
-  }
-
   // Check if this is an org route: /[slug]/dashboard or /[slug]/portal
-  // First segment must not be a reserved path
+  // First segment must not be a reserved path (or can be 'demo' for demo mode)
   const isOrgRoute = firstSegment &&
-    !RESERVED_PATHS.includes(firstSegment) &&
+    (!RESERVED_PATHS.includes(firstSegment) || firstSegment === 'demo') &&
     segments.length >= 2 &&
     (segments[1] === 'dashboard' || segments[1] === 'portal');
 
   if (isOrgRoute && segments[1] === 'dashboard') {
     const urlSlug = firstSegment;
+
+    // Skip auth checks for demo mode - anyone can access
+    if (urlSlug === 'demo') {
+      return NextResponse.next();
+    }
 
     // Not authenticated - redirect to login
     if (!req.auth) {

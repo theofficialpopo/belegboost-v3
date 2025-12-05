@@ -1,8 +1,7 @@
-import { eq, desc } from 'drizzle-orm';
-import { db } from '@/db';
-import { submissions } from '@/db/schema';
 import Overview from '@/components/dashboard/views/Overview';
 import { notFound } from 'next/navigation';
+import { SUBMISSIONS } from '@/lib/data';
+import { getOrganizationIdBySlug, getSubmissionsForOrg } from '@/lib/db-helpers';
 
 export const metadata = {
   title: 'Übersicht - BelegBoost Dashboard',
@@ -13,37 +12,29 @@ interface OverviewPageProps {
   params: Promise<{ slug: string }>;
 }
 
-async function getOrganizationId(slug: string): Promise<string | null> {
-  const org = await db.query.organizations.findFirst({
-    where: (organizations, { eq }) => eq(organizations.subdomain, slug),
-    columns: { id: true },
-  });
-  return org?.id || null;
-}
-
 async function getSubmissions(organizationId: string) {
-  const data = await db.query.submissions.findMany({
-    where: eq(submissions.organizationId, organizationId),
-    orderBy: desc(submissions.receivedAt),
-    with: {
-      teamMember: true,
-    },
+  // Use the org-scoped helper that enforces multi-tenant isolation
+  const data = await getSubmissionsForOrg(organizationId, {
+    includeTeamMember: true,
   });
 
   // Transform DB data to match frontend Submission type
   return data.map((sub) => ({
     id: sub.id,
     clientName: sub.clientName,
-    clientNumber: sub.clientNumber || '',
+    clientNumber: sub.clientNumber,
+    clientEmail: sub.clientEmail,
     provider: sub.provider,
-    providerLogo: sub.providerLogo || '',
+    providerLogo: sub.providerLogo,
+    dateFrom: sub.dateFrom,
+    dateTo: sub.dateTo,
     period: `${formatDate(sub.dateFrom)} - ${formatDate(sub.dateTo)}`,
-    receivedAt: formatDate(sub.receivedAt),
-    transactionCount: sub.transactionCount || 0,
+    receivedAt: sub.receivedAt,
+    transactionCount: sub.transactionCount,
     status: sub.status,
-    endBalance: sub.endBalance || '0.00',
-    assignedAdvisor: sub.teamMember?.name || 'Nicht zugewiesen',
-    datevAccount: sub.datevAccount || undefined,
+    endBalance: sub.endBalance,
+    assignedAdvisor: sub.teamMember?.name || null,
+    datevAccount: sub.datevAccount,
   }));
 }
 
@@ -57,7 +48,14 @@ function formatDate(date: Date): string {
 
 export default async function OverviewPage({ params }: OverviewPageProps) {
   const { slug } = await params;
-  const organizationId = await getOrganizationId(slug);
+
+  // Use mock data for demo mode
+  if (slug === 'demo') {
+    return <Overview submissions={SUBMISSIONS} />;
+  }
+
+  // Use the db-helper that validates organizationId
+  const organizationId = await getOrganizationIdBySlug(slug);
 
   if (!organizationId) {
     notFound();

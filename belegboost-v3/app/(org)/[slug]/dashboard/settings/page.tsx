@@ -1,8 +1,6 @@
 import Settings from '@/components/dashboard/views/Settings';
-import { db } from '@/db';
-import { organizations } from '@/db/schema/organizations';
-import { eq } from 'drizzle-orm';
 import { notFound } from 'next/navigation';
+import { getOrganizationBySlug } from '@/lib/db-helpers';
 
 export const metadata = {
   title: 'Einstellungen - BelegBoost Dashboard',
@@ -10,18 +8,33 @@ export const metadata = {
 };
 
 interface SettingsPageProps {
-  params: {
-    slug: string;
-  };
+  params: Promise<{ slug: string }>;
 }
 
-export default async function SettingsPage({ params }: SettingsPageProps) {
-  const { slug } = params;
+// Mock organization for demo mode
+const demoOrganization = {
+  id: 'demo-org-id',
+  name: 'Demo Steuerberatung',
+  subdomain: 'demo',
+  email: 'demo@belegboost.de',
+  plan: 'professional' as const,
+  settings: {
+    theme: 'emerald' as const,
+  },
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
 
-  // Fetch organization data from database
-  const org = await db.query.organizations.findFirst({
-    where: eq(organizations.subdomain, slug),
-  });
+export default async function SettingsPage({ params }: SettingsPageProps) {
+  const { slug } = await params;
+
+  // Use mock data for demo mode
+  if (slug === 'demo') {
+    return <Settings organization={demoOrganization} />;
+  }
+
+  // Use the db-helper that validates slug input
+  const org = await getOrganizationBySlug(slug);
 
   // Return 404 if organization not found
   if (!org) {

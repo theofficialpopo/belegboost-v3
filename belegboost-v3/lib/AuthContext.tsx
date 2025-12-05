@@ -15,8 +15,37 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Internal provider that uses Auth.js session
-const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Mock user for demo mode
+const MOCK_USER: User = {
+  id: 'demo-user-id',
+  name: 'Demo Benutzer',
+  email: 'demo@belegboost.de',
+  role: 'admin',
+  avatar: undefined,
+};
+
+const MOCK_ORGANIZATION_SLUG = 'demo';
+
+// Demo mode provider (no NextAuth session)
+const DemoAuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const value: AuthContextType = useMemo(() => ({
+    user: MOCK_USER,
+    isAuthenticated: true,
+    isLoading: false,
+    login: async () => ({}), // No-op in demo mode
+    logout: async () => {}, // No-op in demo mode
+    organizationSlug: MOCK_ORGANIZATION_SLUG,
+  }), []);
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+// Production mode provider (uses Auth.js session)
+const ProductionAuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { data: session, status } = useSession();
 
   const isLoading = status === 'loading';
@@ -70,13 +99,22 @@ const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// Public AuthProvider that wraps SessionProvider
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Public AuthProvider with mode flag
+export const AuthProvider: React.FC<{
+  children: React.ReactNode;
+  mode?: 'demo' | 'production';
+}> = ({ children, mode = 'production' }) => {
+  // Demo mode: skip SessionProvider and use mock data
+  if (mode === 'demo') {
+    return <DemoAuthContextProvider>{children}</DemoAuthContextProvider>;
+  }
+
+  // Production mode: wrap with SessionProvider
   return (
     <SessionProvider>
-      <AuthContextProvider>
+      <ProductionAuthContextProvider>
         {children}
-      </AuthContextProvider>
+      </ProductionAuthContextProvider>
     </SessionProvider>
   );
 };

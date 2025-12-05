@@ -100,20 +100,35 @@ export interface Advisor {
 }
 
 // --- Dashboard Types ---
+// Frontend view model for submissions (derived from database + computed fields)
 export interface Submission {
   id: string;
   clientName: string;
-  clientNumber: string;
+  clientNumber: string | null;
+  clientEmail: string;
   provider: string;
-  providerLogo: string;
-  period: string;
-  receivedAt: string;
-  transactionCount: number;
+  providerLogo: string | null;
+  // Date fields matching database schema
+  dateFrom: Date | string;
+  dateTo: Date | string;
+  // Computed period string for display (e.g., "Dec 2024")
+  period?: string;
+  receivedAt: Date | string;
+  transactionCount: number | null;
   status: SubmissionStatus;
-  endBalance: string;
-  assignedAdvisor: string;
-  datevAccount?: string;
+  endBalance: string | null;
+  assignedAdvisor: string | null;
+  datevAccount: string | null;
+  // Optional team member relation
+  teamMember?: {
+    id: string;
+    name: string;
+    avatar: string | null;
+  } | null;
 }
+
+// Database submission type (re-exported from Drizzle schema)
+export type { Submission as DBSubmission } from '@/db/schema/submissions';
 
 export interface TeamMember {
   id: string;

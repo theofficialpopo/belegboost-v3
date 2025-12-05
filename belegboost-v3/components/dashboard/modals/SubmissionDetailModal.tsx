@@ -123,7 +123,7 @@ const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({ submissio
             )}
 
             {activeTab === 'transactions' && (
-                <SubmissionTransactionsTab transactionCount={submission.transactionCount} />
+                <SubmissionTransactionsTab transactionCount={submission.transactionCount || 0} />
             )}
         </div>
 

@@ -3,13 +3,31 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { organizations } from '@/db/schema';
 import { OrganizationProvider, Organization } from '@/lib/OrganizationContext';
+import { AuthProvider } from '@/lib/AuthContext';
 
 interface OrgLayoutProps {
   children: React.ReactNode;
   params: Promise<{ slug: string }>;
 }
 
+// Mock organization for demo mode
+const demoOrganization: Organization = {
+  id: 'demo-org-id',
+  name: 'Demo Steuerberatung',
+  subdomain: 'demo',
+  email: 'demo@belegboost.de',
+  plan: 'professional',
+  settings: {
+    theme: 'emerald' as const,
+  },
+};
+
 async function getOrganization(slug: string): Promise<Organization | null> {
+  // Return mock data for demo mode
+  if (slug === 'demo') {
+    return demoOrganization;
+  }
+
   const org = await db.query.organizations.findFirst({
     where: eq(organizations.subdomain, slug),
   });
@@ -28,6 +46,24 @@ async function getOrganization(slug: string): Promise<Organization | null> {
 
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   const { slug } = await params;
+  const isDemoMode = slug === 'demo';
+
+  // For demo mode, use mock data and wrap with AuthProvider in demo mode
+  if (isDemoMode) {
+    return (
+      <AuthProvider mode="demo">
+        <OrganizationProvider organization={demoOrganization}>
+          {/* Demo mode banner */}
+          <div className="bg-amber-500 text-white text-center py-2 px-4 text-sm font-medium">
+            Demo-Modus – Keine echten Daten werden gespeichert
+          </div>
+          {children}
+        </OrganizationProvider>
+      </AuthProvider>
+    );
+  }
+
+  // For production mode, fetch from database
   const organization = await getOrganization(slug);
 
   if (!organization) {

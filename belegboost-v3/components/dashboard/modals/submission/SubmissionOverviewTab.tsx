@@ -14,8 +14,8 @@ interface SubmissionOverviewTabProps {
 }
 
 const SubmissionOverviewTab: React.FC<SubmissionOverviewTabProps> = ({ submission, datevAccount, setDatevAccount }) => {
-  const advisor = getAdvisorById(submission.assignedAdvisor);
-  const advisorName = advisor ? advisor.name : submission.assignedAdvisor;
+  const advisor = submission.assignedAdvisor ? getAdvisorById(submission.assignedAdvisor) : null;
+  const advisorName = advisor ? advisor.name : submission.assignedAdvisor || 'Nicht zugewiesen';
 
   return (
     <div className="space-y-6 animate-in slide-in-from-left-4 fade-in duration-300">

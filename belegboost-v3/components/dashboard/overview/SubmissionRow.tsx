@@ -4,7 +4,7 @@ import React, { memo, useCallback } from 'react';
 import { FileSpreadsheet } from 'lucide-react';
 import { Submission } from '../../../types';
 import { getAdvisorById } from '../../../lib/data';
-import { formatDisplayPeriod, getStatusConfig } from '../../../lib/utils';
+import { formatDisplayPeriod, getStatusConfig, formatDateDE } from '../../../lib/utils';
 
 interface SubmissionRowProps {
   submission: Submission;
@@ -15,8 +15,8 @@ interface SubmissionRowProps {
 const SubmissionRow: React.FC<SubmissionRowProps> = memo(({ submission, onClick, gridClass }) => {
   const status = getStatusConfig(submission.status);
 
-  const advisor = getAdvisorById(submission.assignedAdvisor);
-  const advisorName = advisor ? advisor.name : submission.assignedAdvisor;
+  const advisor = submission.assignedAdvisor ? getAdvisorById(submission.assignedAdvisor) : null;
+  const advisorName = advisor ? advisor.name : submission.assignedAdvisor || 'Nicht zugewiesen';
 
   const handleClick = useCallback(() => {
     onClick(submission);
@@ -54,8 +54,8 @@ const SubmissionRow: React.FC<SubmissionRowProps> = memo(({ submission, onClick,
 
         {/* 3. Period */}
         <div className="flex flex-col justify-center min-w-0">
-            <div className="font-medium text-slate-700 dark:text-slate-300 text-sm whitespace-nowrap overflow-hidden text-ellipsis" title={submission.period}>
-                {formatDisplayPeriod(submission.period)}
+            <div className="font-medium text-slate-700 dark:text-slate-300 text-sm whitespace-nowrap overflow-hidden text-ellipsis" title={submission.period || ''}>
+                {formatDisplayPeriod(submission.period || '')}
             </div>
         </div>
 
@@ -67,7 +67,11 @@ const SubmissionRow: React.FC<SubmissionRowProps> = memo(({ submission, onClick,
 
         {/* 5. Timestamp */}
         <div className="hidden lg:flex flex-col justify-center min-w-0">
-            <div className="text-sm text-slate-600 dark:text-slate-400 truncate">{submission.receivedAt}</div>
+            <div className="text-sm text-slate-600 dark:text-slate-400 truncate">
+                {submission.receivedAt instanceof Date
+                    ? submission.receivedAt.toLocaleDateString('de-DE')
+                    : submission.receivedAt}
+            </div>
         </div>
 
         {/* 6. Status & Actions */}

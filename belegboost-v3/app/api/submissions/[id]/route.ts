@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db } from '@/db';
 import { submissions } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { getSubmissionForOrg } from '@/lib/db-helpers';
 
 export async function PATCH(
   request: NextRequest,
@@ -43,23 +44,14 @@ export async function PATCH(
       }
     }
 
-    // Find submission and verify it belongs to user's organization
-    const submission = await db.query.submissions.findFirst({
-      where: eq(submissions.id, id),
-    });
+    // Use db-helper to find submission with org-scoped enforcement
+    // This automatically ensures the submission belongs to the user's organization
+    const submission = await getSubmissionForOrg(id, session.user.organizationId);
 
     if (!submission) {
       return NextResponse.json(
         { error: 'Submission not found' },
         { status: 404 }
-      );
-    }
-
-    // Authorization: Check if user belongs to the same organization as the submission
-    if (submission.organizationId !== session.user.organizationId) {
-      return NextResponse.json(
-        { error: 'Forbidden: You do not have access to this submission' },
-        { status: 403 }
       );
     }
 
