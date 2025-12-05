@@ -51,17 +51,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req) => {
             },
           });
 
-          if (!user || !user.passwordHash) {
-            // Failed login attempt - rate limit will track this
-            return null;
-          }
+          // Always perform bcrypt compare to prevent timing attacks
+          // Use a dummy hash if user doesn't exist to maintain constant time
+          const dummyHash = '$2a$12$K8K8K8K8K8K8K8K8K8K8K.K8K8K8K8K8K8K8K8K8K8K8K8K8K8K8K8';
+          const hashToCompare = user?.passwordHash || dummyHash;
 
           const passwordMatch = await bcrypt.compare(
             credentials.password as string,
-            user.passwordHash
+            hashToCompare
           );
 
-          if (!passwordMatch) {
+          if (!user || !user.passwordHash || !passwordMatch) {
             // Failed login attempt - rate limit will track this
             return null;
           }
@@ -89,7 +89,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req) => {
     ],
     session: {
       strategy: 'jwt',
-      maxAge: 30 * 24 * 60 * 60, // 30 days
+      maxAge: 7 * 24 * 60 * 60, // 7 days (reduced from 30 for security)
+    },
+    cookies: {
+      sessionToken: {
+        options: {
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production',
+        },
+      },
     },
     pages: {
       signIn: '/login',

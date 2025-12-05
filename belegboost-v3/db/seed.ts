@@ -12,8 +12,11 @@ if (!connectionString) {
 const client = postgres(connectionString);
 const db = drizzle(client, { schema });
 
+// Use 12 rounds for stronger password hashing (OWASP recommendation)
+const BCRYPT_ROUNDS = 12;
+
 async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 10);
+  return bcrypt.hash(password, BCRYPT_ROUNDS);
 }
 
 async function seed() {
