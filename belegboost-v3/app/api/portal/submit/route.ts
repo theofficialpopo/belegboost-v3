@@ -1,23 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { submissions, files } from '@/db/schema';
-import { nanoid } from 'nanoid';
-
-// File upload handler would typically use S3 or similar storage
-// For now, we'll simulate the storage and use a placeholder key
-async function uploadFileToStorage(file: File): Promise<{ s3Key: string; sizeBytes: number }> {
-  // TODO: Implement actual file upload to S3/R2/similar service
-  // This is a placeholder implementation
-  const s3Key = `uploads/${nanoid()}/${file.name}`;
-  const sizeBytes = file.size;
-
-  // In production, you would:
-  // 1. Upload to S3/R2 using AWS SDK or similar
-  // 2. Return the actual s3Key from the upload response
-  // 3. Implement proper error handling and retries
-
-  return { s3Key, sizeBytes };
-}
+import { uploadFile, validateFile } from '@/lib/storage';
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,6 +47,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate files before processing
+    const dataFileValidation = validateFile(dataFile);
+    if (!dataFileValidation.valid) {
+      return NextResponse.json(
+        { error: `Invalid data file: ${dataFileValidation.error}` },
+        { status: 400 }
+      );
+    }
+
+    if (pdfFile) {
+      const pdfFileValidation = validateFile(pdfFile);
+      if (!pdfFileValidation.valid) {
+        return NextResponse.json(
+          { error: `Invalid PDF file: ${pdfFileValidation.error}` },
+          { status: 400 }
+        );
+      }
+    }
+
     // Map provider name to logo identifier
     const providerLogoMap: Record<string, string> = {
       'American Express': 'amex',
@@ -95,8 +98,12 @@ export async function POST(request: NextRequest) {
     // Upload files and create file records
     const fileRecords: Array<{ originalName: string; s3Key: string; mimeType: string; sizeBytes: number }> = [];
 
+    // Upload data file
     if (dataFile) {
-      const { s3Key, sizeBytes } = await uploadFileToStorage(dataFile);
+      const { s3Key, sizeBytes } = await uploadFile(dataFile, {
+        organizationId,
+        submissionId: submission.id,
+      });
       fileRecords.push({
         originalName: dataFile.name,
         s3Key,
@@ -105,8 +112,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Upload PDF file if provided
     if (pdfFile) {
-      const { s3Key, sizeBytes } = await uploadFileToStorage(pdfFile);
+      const { s3Key, sizeBytes } = await uploadFile(pdfFile, {
+        organizationId,
+        submissionId: submission.id,
+      });
       fileRecords.push({
         originalName: pdfFile.name,
         s3Key,
