@@ -8,7 +8,7 @@ import { useToastData, useToastActions } from '../../lib/ToastContext';
  * Global toast container that renders all active toasts.
  * Uses split context to avoid unnecessary re-renders in other components.
  */
-const GlobalToasts: React.FC = () => {
+const GlobalToasts = () => {
   const toasts = useToastData();
   const { removeToast } = useToastActions();
 

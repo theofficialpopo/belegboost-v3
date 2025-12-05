@@ -6,7 +6,7 @@ import { Check } from 'lucide-react';
 import Button from '../ui/Button';
 import type { PricingTier } from '../../types';
 
-const Pricing: React.FC = () => {
+const Pricing = () => {
   const [isAnnual, setIsAnnual] = useState(true);
 
   // Base monthly prices

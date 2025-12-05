@@ -4,6 +4,8 @@ import { db } from '@/db';
 import { teamMembers } from '@/db/schema/team-members';
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
+import { unauthorized, forbidden, badRequest, notFound, serverError } from '@/lib/api-errors';
 
 // Validation schema for team member data
 const teamMemberSchema = z.object({
@@ -22,18 +24,12 @@ export async function POST(request: NextRequest) {
     // Check authentication
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return unauthorized();
     }
 
     // Check if user has permission (owner or admin)
     if (session.user.role !== 'owner' && session.user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Forbidden: Only owners and admins can manage team members' },
-        { status: 403 }
-      );
+      return forbidden('Only owners and admins can manage team members');
     }
 
     // Parse and validate request body
@@ -42,10 +38,7 @@ export async function POST(request: NextRequest) {
 
     // Prevent creating owner role unless the current user is an owner
     if (validatedData.role === 'owner' && session.user.role !== 'owner') {
-      return NextResponse.json(
-        { error: 'Forbidden: Only owners can create other owners' },
-        { status: 403 }
-      );
+      return forbidden('Only owners can create other owners');
     }
 
     // Create new team member
@@ -60,6 +53,10 @@ export async function POST(request: NextRequest) {
       status: 'invited', // New members start as invited
     }).returning();
 
+    if (!newMember) {
+      return serverError('Failed to create team member');
+    }
+
     return NextResponse.json({
       success: true,
       data: newMember,
@@ -67,20 +64,14 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
   } catch (error) {
-    console.error('Error creating team member:', error);
+    logger.error('Error creating team member', error);
 
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation error', details: error.issues },
-        { status: 400 }
-      );
+      return badRequest('Validation error', error.issues);
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return serverError();
   }
 }
 
@@ -90,18 +81,12 @@ export async function PATCH(request: NextRequest) {
     // Check authentication
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return unauthorized();
     }
 
     // Check if user has permission (owner or admin)
     if (session.user.role !== 'owner' && session.user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Forbidden: Only owners and admins can manage team members' },
-        { status: 403 }
-      );
+      return forbidden('Only owners and admins can manage team members');
     }
 
     // Parse and validate request body
@@ -109,10 +94,7 @@ export async function PATCH(request: NextRequest) {
     const validatedData = teamMemberSchema.parse(body);
 
     if (!validatedData.id) {
-      return NextResponse.json(
-        { error: 'Member ID is required for updates' },
-        { status: 400 }
-      );
+      return badRequest('Member ID is required for updates');
     }
 
     // Use db-helper to fetch existing member with org-scoped enforcement
@@ -123,26 +105,17 @@ export async function PATCH(request: NextRequest) {
     );
 
     if (!existingMember) {
-      return NextResponse.json(
-        { error: 'Team member not found' },
-        { status: 404 }
-      );
+      return notFound('Team member');
     }
 
     // Prevent modifying owner role unless the current user is an owner
     if (existingMember.role === 'owner' && session.user.role !== 'owner') {
-      return NextResponse.json(
-        { error: 'Forbidden: Only owners can modify other owners' },
-        { status: 403 }
-      );
+      return forbidden('Only owners can modify other owners');
     }
 
     // Prevent changing role to owner unless current user is owner
     if (validatedData.role === 'owner' && session.user.role !== 'owner') {
-      return NextResponse.json(
-        { error: 'Forbidden: Only owners can promote members to owner' },
-        { status: 403 }
-      );
+      return forbidden('Only owners can promote members to owner');
     }
 
     // Update team member
@@ -165,6 +138,10 @@ export async function PATCH(request: NextRequest) {
       )
       .returning();
 
+    if (!updatedMember) {
+      return serverError('Failed to update team member');
+    }
+
     return NextResponse.json({
       success: true,
       data: updatedMember,
@@ -172,19 +149,13 @@ export async function PATCH(request: NextRequest) {
     }, { status: 200 });
 
   } catch (error) {
-    console.error('Error updating team member:', error);
+    logger.error('Error updating team member', error);
 
     // Handle Zod validation errors
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Validation error', details: error.issues },
-        { status: 400 }
-      );
+      return badRequest('Validation error', error.issues);
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return serverError();
   }
 }

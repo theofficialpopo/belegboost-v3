@@ -12,7 +12,7 @@ interface IdentityStepProps {
   onNext: () => void;
 }
 
-const IdentityStep: React.FC<IdentityStepProps> = ({ data, updateData, onNext }) => {
+const IdentityStep = ({ data, updateData, onNext }: IdentityStepProps) => {
   return (
     <div className="animate-in slide-in-from-right-4 fade-in duration-300">
       <StepHeader

@@ -8,10 +8,10 @@ interface PortalLayoutProps {
   advisorName?: string;
 }
 
-const PortalLayout: React.FC<PortalLayoutProps> = ({
+const PortalLayout = ({
   children,
   advisorName = "Kanzlei Dr. Weiss & Partner"
-}) => {
+}: PortalLayoutProps) => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans transition-colors duration-300">
 

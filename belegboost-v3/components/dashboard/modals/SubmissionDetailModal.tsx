@@ -15,7 +15,7 @@ interface SubmissionDetailModalProps {
   onClose: () => void;
 }
 
-const SubmissionDetailModal: React.FC<SubmissionDetailModalProps> = ({ submission, isOpen, onClose }) => {
+const SubmissionDetailModal = ({ submission, isOpen, onClose }: SubmissionDetailModalProps) => {
   const [datevAccount, setDatevAccount] = useState('');
   const [activeTab, setActiveTab] = useState<'overview' | 'transactions'>('overview');
   const [isSaving, setIsSaving] = useState(false);

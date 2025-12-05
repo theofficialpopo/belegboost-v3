@@ -3,7 +3,7 @@
 import React from 'react';
 import Skeleton from '../../ui/Skeleton';
 
-const TeamMemberCardSkeleton: React.FC = () => {
+const TeamMemberCardSkeleton = () => {
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6">
         <div className="flex items-start justify-between mb-6">

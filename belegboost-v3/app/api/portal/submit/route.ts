@@ -2,9 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { submissions, files } from '@/db/schema';
 import { uploadFile, validateFile } from '@/lib/storage';
+import { auth } from '@/auth';
+import { logger } from '@/lib/logger';
+import { unauthorized, forbidden, badRequest, serverError } from '@/lib/api-errors';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const session = await auth();
+
+    if (!session?.user) {
+      return unauthorized();
+    }
+
     // Parse FormData
     const formData = await request.formData();
 
@@ -12,10 +22,13 @@ export async function POST(request: NextRequest) {
     const organizationId = formData.get('organizationId') as string;
 
     if (!organizationId) {
-      return NextResponse.json(
-        { error: 'Organization ID is required' },
-        { status: 400 }
-      );
+      return badRequest('Organization ID is required');
+    }
+
+    // SECURITY: Verify the organizationId matches the authenticated user's organization
+    // This prevents a user from creating submissions for other organizations
+    if (session.user.organizationId !== organizationId) {
+      return forbidden('Cannot create submissions for other organizations');
     }
 
     // Extract form fields
@@ -34,35 +47,23 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (!clientName || !clientEmail || !provider || !startDate || !endDate) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return badRequest('Missing required fields');
     }
 
     if (!dataFile) {
-      return NextResponse.json(
-        { error: 'Data file is required' },
-        { status: 400 }
-      );
+      return badRequest('Data file is required');
     }
 
     // Validate files before processing
     const dataFileValidation = validateFile(dataFile);
     if (!dataFileValidation.valid) {
-      return NextResponse.json(
-        { error: `Invalid data file: ${dataFileValidation.error}` },
-        { status: 400 }
-      );
+      return badRequest(`Invalid data file: ${dataFileValidation.error}`);
     }
 
     if (pdfFile) {
       const pdfFileValidation = validateFile(pdfFile);
       if (!pdfFileValidation.valid) {
-        return NextResponse.json(
-          { error: `Invalid PDF file: ${pdfFileValidation.error}` },
-          { status: 400 }
-        );
+        return badRequest(`Invalid PDF file: ${pdfFileValidation.error}`);
       }
     }
 
@@ -76,86 +77,93 @@ export async function POST(request: NextRequest) {
     };
     const providerLogo = providerLogoMap[provider] || 'generic';
 
-    // Create submission record
-    const [submission] = await db
-      .insert(submissions)
-      .values({
-        organizationId,
-        clientName,
-        clientNumber: clientNumber || null,
-        clientEmail,
-        provider,
-        providerLogo,
-        dateFrom: new Date(startDate),
-        dateTo: new Date(endDate),
-        endBalance: endBalance || null,
-        assignedAdvisor: selectedAdvisor || null,
-        status: 'new',
-        transactionCount: 0,
-      })
-      .returning();
+    // Wrap submission and file record creation in a transaction
+    // Note: File uploads to S3/R2 happen inside the transaction callback
+    // If any operation fails, both submission and file records will be rolled back
+    const result = await db.transaction(async (tx) => {
+      // Create submission record
+      const [submission] = await tx
+        .insert(submissions)
+        .values({
+          organizationId,
+          clientName,
+          clientNumber: clientNumber || null,
+          clientEmail,
+          provider,
+          providerLogo,
+          dateFrom: new Date(startDate),
+          dateTo: new Date(endDate),
+          endBalance: endBalance || null,
+          assignedAdvisor: selectedAdvisor || null,
+          status: 'new',
+          transactionCount: 0,
+        })
+        .returning();
 
-    // Upload files and create file records
-    const fileRecords: Array<{ originalName: string; s3Key: string; mimeType: string; sizeBytes: number }> = [];
+      if (!submission) {
+        throw new Error('Failed to create submission');
+      }
 
-    // Upload data file
-    if (dataFile) {
-      const { s3Key, sizeBytes } = await uploadFile(dataFile, {
-        organizationId,
-        submissionId: submission.id,
-      });
-      fileRecords.push({
-        originalName: dataFile.name,
-        s3Key,
-        mimeType: dataFile.type,
-        sizeBytes,
-      });
-    }
+      // Upload files and collect file records
+      const fileRecords: Array<{ originalName: string; s3Key: string; mimeType: string; sizeBytes: number }> = [];
 
-    // Upload PDF file if provided
-    if (pdfFile) {
-      const { s3Key, sizeBytes } = await uploadFile(pdfFile, {
-        organizationId,
-        submissionId: submission.id,
-      });
-      fileRecords.push({
-        originalName: pdfFile.name,
-        s3Key,
-        mimeType: pdfFile.type,
-        sizeBytes,
-      });
-    }
-
-    // Insert file records
-    if (fileRecords.length > 0) {
-      await db.insert(files).values(
-        fileRecords.map(file => ({
+      // Upload data file
+      if (dataFile) {
+        const { s3Key, sizeBytes } = await uploadFile(dataFile, {
+          organizationId,
           submissionId: submission.id,
-          originalName: file.originalName,
-          s3Key: file.s3Key,
-          mimeType: file.mimeType,
-          sizeBytes: file.sizeBytes,
-          parseStatus: 'pending' as const,
-        }))
-      );
-    }
+        });
+        fileRecords.push({
+          originalName: dataFile.name,
+          s3Key,
+          mimeType: dataFile.type,
+          sizeBytes,
+        });
+      }
+
+      // Upload PDF file if provided
+      if (pdfFile) {
+        const { s3Key, sizeBytes } = await uploadFile(pdfFile, {
+          organizationId,
+          submissionId: submission.id,
+        });
+        fileRecords.push({
+          originalName: pdfFile.name,
+          s3Key,
+          mimeType: pdfFile.type,
+          sizeBytes,
+        });
+      }
+
+      // Insert file records
+      if (fileRecords.length > 0) {
+        await tx.insert(files).values(
+          fileRecords.map(file => ({
+            submissionId: submission.id,
+            originalName: file.originalName,
+            s3Key: file.s3Key,
+            mimeType: file.mimeType,
+            sizeBytes: file.sizeBytes,
+            parseStatus: 'pending' as const,
+          }))
+        );
+      }
+
+      return { submissionId: submission.id };
+    });
 
     // Return success response with submission ID
     return NextResponse.json({
       success: true,
-      submissionId: submission.id,
+      submissionId: result.submissionId,
       message: 'Submission created successfully',
     });
 
   } catch (error) {
-    console.error('Error creating submission:', error);
-
-    return NextResponse.json(
-      {
-        error: 'Failed to create submission',
-        details: error instanceof Error ? error.message : 'Unknown error'
-      },
-      { status: 500 }
+    logger.error('Error creating submission', error);
+    return serverError(
+      'Failed to create submission',
+      error instanceof Error ? error.message : 'Unknown error'
     );
   }
 }

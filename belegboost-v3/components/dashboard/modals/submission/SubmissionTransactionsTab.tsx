@@ -18,7 +18,7 @@ const MOCK_TRANSACTIONS = [
   { id: 8, merchant: 'GitHub Inc.', location: 'San Francisco, US', date: '18.09.2025', amountEUR: '21,00 €', amountOrig: 'USD 22.50' },
 ];
 
-const SubmissionTransactionsTab: React.FC<SubmissionTransactionsTabProps> = ({ transactionCount }) => {
+const SubmissionTransactionsTab = ({ transactionCount }: SubmissionTransactionsTabProps) => {
   const [showAllTransactions, setShowAllTransactions] = useState(false);
 
   const displayedTransactions = useMemo(

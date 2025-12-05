@@ -6,7 +6,7 @@ import { FileText, Menu } from 'lucide-react';
 import Button from '../ui/Button';
 import ThemeSelector from '../ui/ThemeSelector';
 
-const Navbar: React.FC = () => {
+const Navbar = () => {
   return (
     <div className="fixed top-6 inset-x-0 z-50 flex justify-center px-4">
       <nav className="w-full max-w-5xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/20 dark:border-white/10 rounded-full shadow-2xl shadow-slate-200/50 dark:shadow-black/50 px-6 py-3 flex items-center justify-between transition-all duration-300">

@@ -12,7 +12,7 @@ interface SubmissionRowProps {
   gridClass: string;
 }
 
-const SubmissionRow: React.FC<SubmissionRowProps> = memo(({ submission, onClick, gridClass }) => {
+const SubmissionRow = memo(({ submission, onClick, gridClass }: SubmissionRowProps) => {
   const status = getStatusConfig(submission.status);
 
   const advisor = submission.assignedAdvisor ? getAdvisorById(submission.assignedAdvisor) : null;

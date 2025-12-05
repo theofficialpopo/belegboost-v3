@@ -6,7 +6,7 @@ interface OverviewHeaderProps {
   gridClass: string;
 }
 
-const OverviewHeader: React.FC<OverviewHeaderProps> = ({ gridClass }) => {
+const OverviewHeader = ({ gridClass }: OverviewHeaderProps) => {
   return (
     <div className={`hidden md:grid ${gridClass} py-3 text-[10px] uppercase tracking-wider font-bold text-slate-400 select-none border-b border-slate-100 dark:border-slate-800 border-x border-t border-transparent mb-2`}>
         <div>Mandant / Quelle</div>

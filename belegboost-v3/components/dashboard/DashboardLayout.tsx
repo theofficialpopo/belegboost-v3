@@ -25,7 +25,7 @@ const navItemsDef = [
   { id: 'settings', segment: 'settings', label: 'Einstellungen', icon: Settings },
 ] as const;
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
+const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();

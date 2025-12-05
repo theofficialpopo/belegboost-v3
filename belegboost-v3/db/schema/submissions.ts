@@ -41,6 +41,8 @@ export const submissions = pgTable('submissions', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 }, (table) => [
   index('submissions_org_idx').on(table.organizationId),
+  index('submissions_team_member_idx').on(table.teamMemberId),
+  index('submissions_reviewed_by_idx').on(table.reviewedBy),
   index('submissions_status_idx').on(table.status),
   index('submissions_received_idx').on(table.receivedAt),
   // Composite index for the most common query pattern (org-scoped, filtered by status, ordered by date)
@@ -60,6 +62,9 @@ export const submissionsRelations = relations(submissions, ({ one }) => ({
     fields: [submissions.reviewedBy],
     references: [users.id],
   }),
+  // Note: Reverse many() relations (files, exports) are inferred by Drizzle
+  // from the one() relations defined in files.ts and exports.ts
+  // They can be eager-loaded using: db.query.submissions.findMany({ with: { files: true, exports: true } })
 }));
 
 export type Submission = typeof submissions.$inferSelect;

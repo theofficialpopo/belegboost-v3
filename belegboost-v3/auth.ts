@@ -30,6 +30,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req) => {
             return null;
           }
 
+          // Validate that credentials are strings
+          if (typeof credentials.email !== 'string' || typeof credentials.password !== 'string') {
+            return null;
+          }
+
           // Check rate limit before processing authentication
           const rateLimitResult = checkAuthRateLimit(clientIp);
 
@@ -44,8 +49,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req) => {
             );
           }
 
+          // NOTE: User lookup by email is intentionally not org-scoped
+          // Users provide email (not org-specific) during login
+          // The organization context is established after authentication
           const user = await db.query.users.findFirst({
-            where: eq(users.email, credentials.email as string),
+            where: eq(users.email, credentials.email),
             with: {
               organization: true,
             },
@@ -57,7 +65,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req) => {
           const hashToCompare = user?.passwordHash || dummyHash;
 
           const passwordMatch = await bcrypt.compare(
-            credentials.password as string,
+            credentials.password,
             hashToCompare
           );
 
@@ -106,6 +114,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req) => {
     },
     callbacks: {
       async jwt({ token, user }) {
+        // Only update token with user data on initial sign-in
         if (user) {
           token.id = user.id;
           token.role = user.role;
@@ -116,13 +125,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req) => {
         return token;
       },
       async session({ session, token }) {
-        if (session.user && token) {
-          // Safely assign token properties with fallbacks
-          session.user.id = typeof token.id === 'string' ? token.id : '';
-          session.user.role = typeof token.role === 'string' ? token.role : 'member';
-          session.user.organizationId = typeof token.organizationId === 'string' ? token.organizationId : '';
-          session.user.organizationSlug = typeof token.organizationSlug === 'string' ? token.organizationSlug : '';
-          session.user.avatar = typeof token.avatar === 'string' ? token.avatar : undefined;
+        // Type guard function to validate string values
+        const isValidString = (value: unknown): value is string => {
+          return typeof value === 'string' && value.length > 0;
+        };
+
+        if (session.user) {
+          // Use type guards to ensure safe assignment
+          session.user.id = isValidString(token.id) ? token.id : '';
+          session.user.role = isValidString(token.role) ? token.role : 'member';
+          session.user.organizationId = isValidString(token.organizationId) ? token.organizationId : '';
+          session.user.organizationSlug = isValidString(token.organizationSlug) ? token.organizationSlug : '';
+          session.user.avatar = isValidString(token.avatar) ? token.avatar : undefined;
         }
         return session;
       },
@@ -130,7 +144,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth((req) => {
   };
 });
 
-// Type augmentation for Auth.js
+// Type augmentation for NextAuth v5
 declare module 'next-auth' {
   interface User {
     role: string;
@@ -152,4 +166,15 @@ declare module 'next-auth' {
   }
 }
 
-// JWT types are handled internally by next-auth
+// JWT type augmentation - extends the default JWT interface
+import type { JWT as DefaultJWT } from '@auth/core/jwt';
+
+declare module '@auth/core/jwt' {
+  interface JWT extends DefaultJWT {
+    id?: string;
+    role?: string;
+    organizationId?: string;
+    organizationSlug?: string;
+    avatar?: string;
+  }
+}

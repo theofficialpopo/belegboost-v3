@@ -8,7 +8,7 @@ interface PageWrapperProps {
   children: React.ReactNode;
 }
 
-const PageWrapper: React.FC<PageWrapperProps> = ({ children }) => {
+const PageWrapper = ({ children }: PageWrapperProps) => {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);

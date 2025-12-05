@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useMemo, useCallback } from 'react';
-import { SessionProvider, useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react';
+import { useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react';
 import type { User, TeamRole } from '../types';
 
 interface AuthContextType {
@@ -27,7 +27,7 @@ const MOCK_USER: User = {
 const MOCK_ORGANIZATION_SLUG = 'demo';
 
 // Demo mode provider (no NextAuth session)
-const DemoAuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const DemoAuthContextProvider = ({ children }: { children: React.ReactNode }) => {
   const value: AuthContextType = useMemo(() => ({
     user: MOCK_USER,
     isAuthenticated: true,
@@ -44,14 +44,16 @@ const DemoAuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 };
 
-// Production mode provider (uses Auth.js session)
-const ProductionAuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+// Production mode provider (uses NextAuth session - requires SessionProvider ancestor)
+// This is a thin wrapper that delegates all auth operations to NextAuth
+const ProductionAuthContextProvider = ({ children }: { children: React.ReactNode }) => {
+  // Delegate to NextAuth for session state
   const { data: session, status } = useSession();
 
   const isLoading = status === 'loading';
   const isAuthenticated = status === 'authenticated' && !!session?.user;
 
-  // Map Auth.js session to our User type
+  // Map NextAuth session to our app's User type
   const user: User | null = useMemo(() => {
     if (!session?.user) return null;
     return {
@@ -66,6 +68,7 @@ const ProductionAuthContextProvider: React.FC<{ children: React.ReactNode }> = (
   const organizationSlug = session?.user?.organizationSlug || null;
 
   const login = useCallback(async (email: string, password: string): Promise<{ error?: string }> => {
+    // Delegate to NextAuth signIn (single source of truth)
     const result = await nextAuthSignIn('credentials', {
       email,
       password,
@@ -80,6 +83,7 @@ const ProductionAuthContextProvider: React.FC<{ children: React.ReactNode }> = (
   }, []);
 
   const logout = useCallback(async () => {
+    // Delegate to NextAuth signOut (single source of truth)
     await nextAuthSignOut({ redirect: false });
   }, []);
 
@@ -99,24 +103,20 @@ const ProductionAuthContextProvider: React.FC<{ children: React.ReactNode }> = (
   );
 };
 
-// Public AuthProvider with mode flag
-export const AuthProvider: React.FC<{
+// Public AuthProvider - thin wrapper around NextAuth
+// Production mode: Delegates to NextAuth (assumes SessionProvider is an ancestor in layout)
+// Demo mode: Provides mock authentication state for development
+export const AuthProvider = ({ children, mode = 'production' }: {
   children: React.ReactNode;
   mode?: 'demo' | 'production';
-}> = ({ children, mode = 'production' }) => {
-  // Demo mode: skip SessionProvider and use mock data
+}) => {
+  // Demo mode: use mock data (no NextAuth)
   if (mode === 'demo') {
     return <DemoAuthContextProvider>{children}</DemoAuthContextProvider>;
   }
 
-  // Production mode: wrap with SessionProvider
-  return (
-    <SessionProvider>
-      <ProductionAuthContextProvider>
-        {children}
-      </ProductionAuthContextProvider>
-    </SessionProvider>
-  );
+  // Production mode: delegate to NextAuth (SessionProvider must be an ancestor)
+  return <ProductionAuthContextProvider>{children}</ProductionAuthContextProvider>;
 };
 
 export const useAuth = (): AuthContextType => {

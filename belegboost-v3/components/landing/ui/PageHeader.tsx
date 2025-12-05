@@ -7,7 +7,7 @@ interface PageHeaderProps {
   badge?: string;
 }
 
-const PageHeader: React.FC<PageHeaderProps> = ({ title, description, children, badge }) => {
+const PageHeader = ({ title, description, children, badge }: PageHeaderProps) => {
   return (
     <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
       {/* Background Gradients */}

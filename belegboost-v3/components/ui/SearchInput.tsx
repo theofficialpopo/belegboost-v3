@@ -13,12 +13,12 @@ interface SearchInputProps {
 /**
  * Reusable search input component - extracted from duplicated code in Overview and Team views
  */
-const SearchInput: React.FC<SearchInputProps> = ({
+const SearchInput = ({
   value,
   onChange,
   placeholder = 'Suchen...',
   className = ''
-}) => {
+}: SearchInputProps) => {
   return (
     <div className={`relative ${className}`}>
       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">

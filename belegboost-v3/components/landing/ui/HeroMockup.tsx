@@ -1,7 +1,7 @@
 import React from 'react';
 import { RefreshCw, FileText, Check, Download } from 'lucide-react';
 
-const HeroMockup: React.FC = () => {
+const HeroMockup = () => {
   return (
     <div className="relative animate-in slide-in-from-right-8 fade-in duration-1000 delay-300 perspective-1000">
       {/* Main Card */}

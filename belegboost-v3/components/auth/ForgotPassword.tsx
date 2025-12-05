@@ -7,7 +7,7 @@ import AuthLayout from './AuthLayout';
 import IconInput from '../ui/IconInput';
 import { Mail, CheckCircle2 } from 'lucide-react';
 
-const ForgotPassword: React.FC = () => {
+const ForgotPassword = () => {
   const [isSent, setIsSent] = useState(false);
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);

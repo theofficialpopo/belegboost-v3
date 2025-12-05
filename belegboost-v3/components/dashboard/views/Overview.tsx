@@ -15,7 +15,7 @@ interface OverviewProps {
   submissions: Submission[];
 }
 
-const Overview: React.FC<OverviewProps> = ({ submissions }) => {
+const Overview = ({ submissions }: OverviewProps) => {
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);

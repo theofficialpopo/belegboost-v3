@@ -3,6 +3,7 @@ import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { users } from '@/db/schema';
 import { randomUUID } from 'crypto';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +18,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Look up user by email
+    // NOTE: User lookup by email is intentionally not org-scoped
+    // Users identify themselves by email for password reset
+    // The organization context is not required for this operation
     const user = await db.query.users.findFirst({
       where: eq(users.email, email.toLowerCase().trim()),
     });
@@ -42,12 +45,10 @@ export async function POST(request: NextRequest) {
       // Log the reset link for development
       // In production, this would be sent via email
       const resetUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/reset-password?token=${resetToken}`;
-      console.log('Password reset link generated for', email);
-      console.log('Reset URL:', resetUrl);
-      console.log('Token expires at:', resetExpires.toISOString());
+      logger.info('Password reset link generated', { email, resetUrl, resetExpires: resetExpires.toISOString() });
     } else {
       // Log attempt for non-existent email (for monitoring purposes)
-      console.log('Password reset requested for non-existent email:', email);
+      logger.info('Password reset requested for non-existent email', { email });
     }
 
     // Always return success response
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error in forgot-password API:', error);
+    logger.error('Error in forgot-password API', error);
     return NextResponse.json(
       { error: 'An error occurred while processing your request' },
       { status: 500 }

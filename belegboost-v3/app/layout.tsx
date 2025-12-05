@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { SessionProvider } from "next-auth/react";
 import "./globals.css";
 import { ThemeProvider } from "../components/providers/ThemeProvider";
 import { ColorThemeProvider } from "../lib/ColorThemeContext";
@@ -45,12 +46,15 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ColorThemeProvider>
-            <AuthProvider>
-              <ToastProvider>
-                {children}
-                <GlobalToasts />
-              </ToastProvider>
-            </AuthProvider>
+            {/* NextAuth SessionProvider - single source of truth for authentication */}
+            <SessionProvider>
+              <AuthProvider>
+                <ToastProvider>
+                  {children}
+                  <GlobalToasts />
+                </ToastProvider>
+              </AuthProvider>
+            </SessionProvider>
           </ColorThemeProvider>
         </ThemeProvider>
       </body>

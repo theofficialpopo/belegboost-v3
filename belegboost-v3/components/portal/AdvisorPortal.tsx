@@ -27,7 +27,7 @@ interface AdvisorPortalProps {
   organization: Organization;
 }
 
-const AdvisorPortal: React.FC<AdvisorPortalProps> = ({ organization }) => {
+const AdvisorPortal = ({ organization }: AdvisorPortalProps) => {
   const router = useRouter();
   const { addToast } = useToastActions();
   const {

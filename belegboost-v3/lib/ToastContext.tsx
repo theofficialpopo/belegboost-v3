@@ -13,7 +13,7 @@ interface ToastActionsType {
 const ToastActionsContext = createContext<ToastActionsType | undefined>(undefined);
 const ToastDataContext = createContext<ToastMessage[]>([]);
 
-export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const ToastProvider = ({ children }: { children: React.ReactNode }) => {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const addToast = useCallback((toastData: Omit<ToastMessage, 'id'>) => {

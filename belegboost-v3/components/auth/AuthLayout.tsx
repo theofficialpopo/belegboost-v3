@@ -12,13 +12,13 @@ interface AuthLayoutProps {
   backLabel?: string;
 }
 
-const AuthLayout: React.FC<AuthLayoutProps> = ({
+const AuthLayout = ({
   children,
   title,
   subtitle,
   backHref = '/',
   backLabel = 'Zurück zur Startseite'
-}) => {
+}: AuthLayoutProps) => {
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-slate-50 dark:bg-slate-950 relative overflow-hidden transition-colors duration-300">
 

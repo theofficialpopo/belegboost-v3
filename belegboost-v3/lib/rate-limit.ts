@@ -172,8 +172,11 @@ class RateLimiter {
   }
 }
 
-// Singleton instance for authentication rate limiting
+// Singleton instance for authentication rate limiting (5 attempts per 15 minutes)
 const authRateLimiter = new RateLimiter(5, 15 * 60 * 1000);
+
+// Singleton instance for registration rate limiting (5 attempts per hour)
+const registrationRateLimiter = new RateLimiter(5, 60 * 60 * 1000);
 
 /**
  * Extract IP address from request headers
@@ -233,6 +236,30 @@ export function resetAuthRateLimit(identifier: string): void {
  */
 export function getAuthRateLimitStats() {
   return authRateLimiter.getStats();
+}
+
+/**
+ * Check rate limit for registration attempts
+ * @param identifier - Usually an IP address
+ * @returns Rate limit result
+ */
+export function checkRegistrationRateLimit(identifier: string): RateLimitResult {
+  return registrationRateLimiter.check(identifier);
+}
+
+/**
+ * Reset rate limit after successful registration
+ * @param identifier - Usually an IP address
+ */
+export function resetRegistrationRateLimit(identifier: string): void {
+  registrationRateLimiter.reset(identifier);
+}
+
+/**
+ * Get registration rate limiter statistics
+ */
+export function getRegistrationRateLimitStats() {
+  return registrationRateLimiter.getStats();
 }
 
 /**

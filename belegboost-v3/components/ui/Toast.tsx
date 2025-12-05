@@ -9,7 +9,7 @@ interface ToastContainerProps {
   onDismiss: (id: string) => void;
 }
 
-const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onDismiss }) => {
+const ToastContainer = ({ toasts, onDismiss }: ToastContainerProps) => {
   return (
     <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
       {toasts.map((toast) => (
@@ -19,7 +19,7 @@ const ToastContainer: React.FC<ToastContainerProps> = ({ toasts, onDismiss }) =>
   );
 };
 
-const Toast: React.FC<{ message: ToastMessage; onDismiss: () => void }> = ({ message, onDismiss }) => {
+const Toast = ({ message, onDismiss }: { message: ToastMessage; onDismiss: () => void }) => {
   const icons = {
     success: <CheckCircle size={20} className="text-green-500" />,
     error: <AlertCircle size={20} className="text-red-500" />,

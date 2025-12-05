@@ -13,7 +13,7 @@ interface SubmissionOverviewTabProps {
   setDatevAccount: (val: string) => void;
 }
 
-const SubmissionOverviewTab: React.FC<SubmissionOverviewTabProps> = ({ submission, datevAccount, setDatevAccount }) => {
+const SubmissionOverviewTab = ({ submission, datevAccount, setDatevAccount }: SubmissionOverviewTabProps) => {
   const advisor = submission.assignedAdvisor ? getAdvisorById(submission.assignedAdvisor) : null;
   const advisorName = advisor ? advisor.name : submission.assignedAdvisor || 'Nicht zugewiesen';
 

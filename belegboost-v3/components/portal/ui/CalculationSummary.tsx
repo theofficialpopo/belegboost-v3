@@ -10,12 +10,12 @@ interface CalculationSummaryProps {
   endBalanceNum: number;
 }
 
-const CalculationSummary: React.FC<CalculationSummaryProps> = ({
+const CalculationSummary = ({
   calculatedStartBalance,
   mockIncoming,
   mockOutgoing,
   endBalanceNum,
-}) => {
+}: CalculationSummaryProps) => {
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl p-6 border border-slate-100 dark:border-slate-700 shadow-sm">
       <div className="grid grid-cols-[24px_1fr_max-content] gap-x-2 gap-y-3 text-sm items-center">

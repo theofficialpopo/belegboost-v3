@@ -14,7 +14,7 @@ interface TeamProps {
   teamMembers: DBTeamMember[];
 }
 
-const Team: React.FC<TeamProps> = ({ teamMembers: initialTeamMembers }) => {
+const Team = ({ teamMembers: initialTeamMembers }: TeamProps) => {
   const [selectedMember, setSelectedMember] = useState<DBTeamMember | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);

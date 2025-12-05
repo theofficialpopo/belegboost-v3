@@ -12,7 +12,7 @@ interface SmartUploadStepProps {
   onFinish: () => void;
 }
 
-const SmartUploadStep: React.FC<SmartUploadStepProps> = ({ data, updateData }) => {
+const SmartUploadStep = ({ data, updateData }: SmartUploadStepProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [search, setSearch] = useState('');
 

@@ -4,6 +4,8 @@ import { db } from '@/db';
 import { submissions } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getSubmissionForOrg } from '@/lib/db-helpers';
+import { logger } from '@/lib/logger';
+import { unauthorized, badRequest, notFound, serverError } from '@/lib/api-errors';
 
 export async function PATCH(
   request: NextRequest,
@@ -13,10 +15,7 @@ export async function PATCH(
     // Get authenticated session
     const session = await auth();
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return unauthorized();
     }
 
     // Get submission ID from URL params
@@ -29,18 +28,12 @@ export async function PATCH(
     // Validate datevAccount
     if (datevAccount !== undefined && datevAccount !== null) {
       if (typeof datevAccount !== 'string') {
-        return NextResponse.json(
-          { error: 'datevAccount must be a string' },
-          { status: 400 }
-        );
+        return badRequest('datevAccount must be a string');
       }
 
       // DATEV account should be max 20 characters (per schema)
       if (datevAccount.length > 20) {
-        return NextResponse.json(
-          { error: 'datevAccount cannot exceed 20 characters' },
-          { status: 400 }
-        );
+        return badRequest('datevAccount cannot exceed 20 characters');
       }
     }
 
@@ -49,21 +42,28 @@ export async function PATCH(
     const submission = await getSubmissionForOrg(id, session.user.organizationId);
 
     if (!submission) {
-      return NextResponse.json(
-        { error: 'Submission not found' },
-        { status: 404 }
-      );
+      return notFound('Submission');
     }
 
     // Update the submission's datevAccount field
+    // SECURITY: Include explicit organizationId check to enforce tenant isolation
     const [updatedSubmission] = await db
       .update(submissions)
       .set({
         datevAccount: datevAccount || null,
         updatedAt: new Date(),
       })
-      .where(eq(submissions.id, id))
+      .where(
+        and(
+          eq(submissions.id, id),
+          eq(submissions.organizationId, session.user.organizationId)
+        )
+      )
       .returning();
+
+    if (!updatedSubmission) {
+      return serverError('Failed to update submission');
+    }
 
     // Return the updated submission
     return NextResponse.json(
@@ -74,10 +74,7 @@ export async function PATCH(
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error updating submission:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    logger.error('Error updating submission', error);
+    return serverError();
   }
 }

@@ -21,7 +21,7 @@ const getRoleBadge = (role: string) => {
   }
 };
 
-const TeamMemberCard: React.FC<TeamMemberCardProps> = memo(({ member, onEdit }) => {
+const TeamMemberCard = memo(({ member, onEdit }: TeamMemberCardProps) => {
   const roleBadge = getRoleBadge(member.role);
   const RoleIcon = roleBadge.icon;
 

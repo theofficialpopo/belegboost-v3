@@ -11,7 +11,7 @@ interface ModalProps {
   maxWidth?: string;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, maxWidth = 'max-w-xl' }) => {
+const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-xl' }: ModalProps) => {
   // Simple body scroll lock
   useEffect(() => {
     if (isOpen) {

@@ -14,7 +14,7 @@ interface AdvisorFinalizeStepProps {
   onFinish: () => void;
 }
 
-const AdvisorFinalizeStep: React.FC<AdvisorFinalizeStepProps> = ({ data, updateData }) => {
+const AdvisorFinalizeStep = ({ data, updateData }: AdvisorFinalizeStepProps) => {
   const [search, setSearch] = useState('');
 
   const filteredAdvisors = useMemo(

@@ -3,61 +3,76 @@ import { db } from '@/db';
 import { organizations, users } from '@/db/schema';
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
-import { z } from 'zod';
-
-// Validation schema for registration
-const registerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number')
-    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
-  companyName: z.string().min(2, 'Company name is required'),
-  subdomain: z.string()
-    .min(3, 'Subdomain must be at least 3 characters')
-    .regex(/^[a-z0-9-]+$/, 'Only lowercase letters, numbers, and hyphens allowed'),
-});
+import {
+  getClientIp,
+  checkRegistrationRateLimit,
+  resetRegistrationRateLimit,
+  RateLimitError,
+} from '@/lib/rate-limit';
+import { logger } from '@/lib/logger';
+import { registerSchema } from '@/lib/validations/auth';
+import { validateCsrf } from '@/lib/csrf';
+import { badRequest, conflict, serverError } from '@/lib/api-errors';
 
 export async function POST(request: NextRequest) {
   try {
+    // Extract IP address for rate limiting
+    const clientIp = getClientIp(request.headers);
+
+    // Check rate limit before processing registration
+    const rateLimitResult = checkRegistrationRateLimit(clientIp);
+
+    if (!rateLimitResult.success) {
+      const retryAfterSeconds = Math.ceil(
+        (rateLimitResult.retryAfter || 0) / 1000
+      );
+      return NextResponse.json(
+        {
+          error: `Too many registration attempts. Please try again in ${retryAfterSeconds} seconds.`,
+          retryAfter: retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(retryAfterSeconds),
+            'X-RateLimit-Limit': String(rateLimitResult.limit),
+            'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+            'X-RateLimit-Reset': String(Math.ceil(rateLimitResult.reset / 1000)),
+          },
+        }
+      );
+    }
+
     // Parse and validate request body
     const body = await request.json();
     const validationResult = registerSchema.safeParse(body);
 
     if (!validationResult.success) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: validationResult.error.flatten() },
-        { status: 400 }
-      );
+      return badRequest('Validation failed', validationResult.error.flatten());
     }
 
     const { name, email, password, companyName, subdomain } = validationResult.data;
 
-    // Check if subdomain is already taken
+    // NOTE: Organization lookup by subdomain is intentionally not org-scoped
+    // This is the registration flow where we're checking subdomain availability
+    // No organization context exists yet for the new user
     const existingOrg = await db.query.organizations.findFirst({
       where: eq(organizations.subdomain, subdomain),
     });
 
     if (existingOrg) {
-      return NextResponse.json(
-        { error: 'Subdomain already taken', field: 'subdomain' },
-        { status: 409 }
-      );
+      return conflict('Subdomain already taken', 'subdomain');
     }
 
-    // Check if email is already registered
+    // NOTE: User lookup by email is intentionally not org-scoped
+    // This is the registration flow checking for duplicate emails across all orgs
+    // No organization context exists yet for the new user
     const existingUser = await db.query.users.findFirst({
       where: eq(users.email, email),
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: 'Email already registered', field: 'email' },
-        { status: 409 }
-      );
+      return conflict('Email already registered', 'email');
     }
 
     // Hash password with bcryptjs (12 rounds)
@@ -100,6 +115,9 @@ export async function POST(request: NextRequest) {
       return { organization: newOrg, user: newUser };
     });
 
+    // Successful registration - reset rate limit for this IP
+    resetRegistrationRateLimit(clientIp);
+
     // Return success response with organization slug
     return NextResponse.json(
       {
@@ -114,22 +132,16 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Registration error:', error);
+    logger.error('Registration error', error);
 
     // Handle database errors
     if (error instanceof Error) {
       // Check for unique constraint violations
       if (error.message.includes('unique constraint')) {
-        return NextResponse.json(
-          { error: 'Email or subdomain already exists' },
-          { status: 409 }
-        );
+        return conflict('Email or subdomain already exists');
       }
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error. Please try again later.' },
-      { status: 500 }
-    );
+    return serverError('Internal server error. Please try again later.');
   }
 }

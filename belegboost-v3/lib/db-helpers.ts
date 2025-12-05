@@ -7,7 +7,7 @@
 
 import { db } from '@/db';
 import { submissions, teamMembers, exports, organizations } from '@/db/schema';
-import { eq, desc, and, SQL } from 'drizzle-orm';
+import { eq, desc, and, SQL, sql, count } from 'drizzle-orm';
 
 /**
  * Higher-order function that wraps any query with organization scope enforcement
@@ -82,6 +82,8 @@ export async function getSubmissionsForOrg(
     limit?: number;
     includeTeamMember?: boolean;
     includeReviewer?: boolean;
+    includeFiles?: boolean;
+    includeExports?: boolean;
   }
 ) {
   if (!organizationId || organizationId.trim() === '') {
@@ -96,6 +98,8 @@ export async function getSubmissionsForOrg(
 
   const whereClause = conditions.length === 1 ? conditions[0] : and(...conditions);
 
+  // PERFORMANCE: Use 'with' clause for eager loading relations in a single query
+  // This prevents N+1 queries when accessing related data (teamMember, files, exports, etc.)
   return db.query.submissions.findMany({
     where: whereClause,
     orderBy: desc(submissions.receivedAt),
@@ -103,6 +107,8 @@ export async function getSubmissionsForOrg(
     with: {
       ...(options?.includeTeamMember && { teamMember: true }),
       ...(options?.includeReviewer && { reviewer: true }),
+      ...(options?.includeFiles && { files: true }),
+      ...(options?.includeExports && { exports: true }),
     },
   });
 }
@@ -120,6 +126,8 @@ export async function getSubmissionForOrg(
   options?: {
     includeTeamMember?: boolean;
     includeReviewer?: boolean;
+    includeFiles?: boolean;
+    includeExports?: boolean;
   }
 ) {
   if (!submissionId || submissionId.trim() === '') {
@@ -129,6 +137,7 @@ export async function getSubmissionForOrg(
     throw new Error('organizationId is required');
   }
 
+  // PERFORMANCE: Use 'with' clause for eager loading relations in a single query
   return db.query.submissions.findFirst({
     where: and(
       eq(submissions.id, submissionId),
@@ -137,6 +146,8 @@ export async function getSubmissionForOrg(
     with: {
       ...(options?.includeTeamMember && { teamMember: true }),
       ...(options?.includeReviewer && { reviewer: true }),
+      ...(options?.includeFiles && { files: true }),
+      ...(options?.includeExports && { exports: true }),
     },
   });
 }
@@ -152,18 +163,23 @@ export async function countSubmissionsByStatusForOrg(organizationId: string) {
     throw new Error('organizationId is required');
   }
 
-  const allSubmissions = await db.query.submissions.findMany({
-    where: eq(submissions.organizationId, organizationId),
-    columns: {
-      status: true,
-    },
-  });
+  // PERFORMANCE FIX: Use SQL aggregation with conditional counts instead of fetching all rows
+  // This executes a single SQL query with COUNT(CASE WHEN...) instead of filtering in JavaScript
+  const result = await db
+    .select({
+      new: count(sql`CASE WHEN ${submissions.status} = 'new' THEN 1 END`),
+      review: count(sql`CASE WHEN ${submissions.status} = 'review' THEN 1 END`),
+      exported: count(sql`CASE WHEN ${submissions.status} = 'exported' THEN 1 END`),
+      total: count(submissions.id),
+    })
+    .from(submissions)
+    .where(eq(submissions.organizationId, organizationId));
 
   return {
-    new: allSubmissions.filter(s => s.status === 'new').length,
-    review: allSubmissions.filter(s => s.status === 'review').length,
-    exported: allSubmissions.filter(s => s.status === 'exported').length,
-    total: allSubmissions.length,
+    new: Number(result[0].new),
+    review: Number(result[0].review),
+    exported: Number(result[0].exported),
+    total: Number(result[0].total),
   };
 }
 
@@ -285,20 +301,6 @@ export async function getExportsForOrg(
     throw new Error('organizationId is required');
   }
 
-  // First, get all submission IDs for this organization
-  const orgSubmissions = await db.query.submissions.findMany({
-    where: eq(submissions.organizationId, organizationId),
-    columns: {
-      id: true,
-    },
-  });
-
-  const submissionIds = orgSubmissions.map(s => s.id);
-
-  if (submissionIds.length === 0) {
-    return [];
-  }
-
   // Build conditions for exports query
   const conditions: SQL[] = [];
 
@@ -310,20 +312,21 @@ export async function getExportsForOrg(
     conditions.push(eq(exports.format, options.format));
   }
 
-  // Query exports that belong to this org's submissions
+  // PERFORMANCE FIX: Use eager loading with 'with' clause to join submissions in a single query
+  // This prevents N+1 queries by fetching exports and their related submissions together
   const allExports = await db.query.exports.findMany({
     where: conditions.length > 0 ? and(...conditions) : undefined,
     orderBy: desc(exports.createdAt),
     limit: options?.limit,
     with: {
-      submission: true,
+      submission: true,  // Eager load submission in the same query
       creator: true,
     },
   });
 
-  // Filter to only include exports for this org's submissions
+  // Filter to only include exports whose submissions belong to this organization
   return allExports.filter(exp =>
-    submissionIds.includes(exp.submissionId)
+    exp.submission && exp.submission.organizationId === organizationId
   );
 }
 
@@ -373,13 +376,25 @@ export async function countExportsByStatusForOrg(organizationId: string) {
     throw new Error('organizationId is required');
   }
 
-  const allExports = await getExportsForOrg(organizationId);
+  // PERFORMANCE FIX: Use SQL aggregation with JOIN instead of calling getExportsForOrg
+  // This executes a single SQL query with COUNT(CASE WHEN...) instead of filtering in JavaScript
+  const result = await db
+    .select({
+      pending: count(sql`CASE WHEN ${exports.status} = 'pending' THEN 1 END`),
+      processing: count(sql`CASE WHEN ${exports.status} = 'processing' THEN 1 END`),
+      completed: count(sql`CASE WHEN ${exports.status} = 'completed' THEN 1 END`),
+      failed: count(sql`CASE WHEN ${exports.status} = 'failed' THEN 1 END`),
+      total: count(exports.id),
+    })
+    .from(exports)
+    .innerJoin(submissions, eq(exports.submissionId, submissions.id))
+    .where(eq(submissions.organizationId, organizationId));
 
   return {
-    pending: allExports.filter(e => e.status === 'pending').length,
-    processing: allExports.filter(e => e.status === 'processing').length,
-    completed: allExports.filter(e => e.status === 'completed').length,
-    failed: allExports.filter(e => e.status === 'failed').length,
-    total: allExports.length,
+    pending: Number(result[0].pending),
+    processing: Number(result[0].processing),
+    completed: Number(result[0].completed),
+    failed: Number(result[0].failed),
+    total: Number(result[0].total),
   };
 }

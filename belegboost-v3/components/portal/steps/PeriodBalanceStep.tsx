@@ -22,7 +22,7 @@ const PRESET_BUTTONS: { label: string; value: PresetType }[] = [
   { label: 'Letztes Jahr', value: 'year' },
 ];
 
-const PeriodBalanceStep: React.FC<PeriodBalanceStepProps> = ({ data, updateData }) => {
+const PeriodBalanceStep = ({ data, updateData }: PeriodBalanceStepProps) => {
   const [mode, setMode] = useState<'month' | 'range'>('month');
   const [detected, setDetected] = useState(false);
   const [balanceInputFocused, setBalanceInputFocused] = useState(false);

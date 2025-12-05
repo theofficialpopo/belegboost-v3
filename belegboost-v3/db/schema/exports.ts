@@ -30,6 +30,7 @@ export const exports = pgTable('exports', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, (table) => [
   index('exports_submission_idx').on(table.submissionId),
+  index('exports_created_by_idx').on(table.createdBy),
   index('exports_status_idx').on(table.status),
 ]);
 

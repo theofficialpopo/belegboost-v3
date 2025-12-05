@@ -1,12 +1,10 @@
-'use client';
-
 import React from 'react';
 import Link from 'next/link';
 import { ArrowRight, Check } from 'lucide-react';
 import Button from '../ui/Button';
 import HeroMockup from './ui/HeroMockup';
 
-const Hero: React.FC = () => {
+const Hero = () => {
   return (
     <section className="relative pt-48 pb-20 lg:pt-56 lg:pb-32 overflow-hidden bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
 

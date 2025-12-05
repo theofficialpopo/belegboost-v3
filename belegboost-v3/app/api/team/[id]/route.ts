@@ -4,6 +4,7 @@ import { db } from '@/db';
 import { teamMembers } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { getTeamMemberForOrg } from '@/lib/db-helpers';
+import { logger } from '@/lib/logger';
 
 export async function DELETE(
   request: NextRequest,
@@ -63,7 +64,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error) {
-    console.error('Error deleting team member:', error);
+    logger.error('Error deleting team member', error);
     return NextResponse.json(
       { error: 'Fehler beim Löschen des Mitarbeiters' },
       { status: 500 }

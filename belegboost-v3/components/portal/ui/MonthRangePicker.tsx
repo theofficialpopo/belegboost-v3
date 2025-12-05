@@ -16,12 +16,12 @@ const MONTHS = [
     "Juli", "August", "September", "Oktober", "November", "Dezember"
 ];
 
-const MonthRangePicker: React.FC<MonthRangePickerProps> = ({
+const MonthRangePicker = ({
     startDate,
     endDate,
     isRange,
     onChange
-}) => {
+}: MonthRangePickerProps) => {
     const [year, setYear] = useState(new Date().getFullYear());
     const [selectionStart, setSelectionStart] = useState<string | null>(null);
 

@@ -27,10 +27,10 @@ interface OrganizationProviderProps {
   organization: Organization;
 }
 
-export const OrganizationProvider: React.FC<OrganizationProviderProps> = ({
+export const OrganizationProvider = ({
   children,
   organization,
-}) => {
+}: OrganizationProviderProps) => {
   return (
     <OrganizationContext.Provider value={{ organization, isLoading: false }}>
       {children}

@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileText, Twitter, Github, Linkedin } from 'lucide-react';
 
-const Footer: React.FC = () => {
+const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   const sections = [

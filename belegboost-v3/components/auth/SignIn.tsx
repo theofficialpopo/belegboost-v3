@@ -20,7 +20,7 @@ const signInSchema = z.object({
 
 type SignInFormData = z.infer<typeof signInSchema>;
 
-const SignIn: React.FC = () => {
+const SignIn = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuth();

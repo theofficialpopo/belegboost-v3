@@ -9,7 +9,7 @@ interface ThemeSelectorProps {
   className?: string;
 }
 
-const ThemeSelector: React.FC<ThemeSelectorProps> = ({ className = '' }) => {
+const ThemeSelector = ({ className = '' }: ThemeSelectorProps) => {
   const [mounted, setMounted] = useState(false);
   const { theme: mode, setTheme: setMode } = useTheme();
   const { colorTheme, setColorTheme } = useColorTheme();

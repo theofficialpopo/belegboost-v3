@@ -15,7 +15,7 @@ interface TeamEditModalProps {
   onMemberDeleted?: () => void;
 }
 
-const TeamEditModal: React.FC<TeamEditModalProps> = ({ member, isOpen, onClose, onMemberDeleted }) => {
+const TeamEditModal = ({ member, isOpen, onClose, onMemberDeleted }: TeamEditModalProps) => {
   const [formData, setFormData] = useState<Partial<DBTeamMember>>({});
   const [isVisible, setIsVisible] = useState(true);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);

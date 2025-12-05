@@ -10,7 +10,7 @@ interface SettingsProps {
   organization: Organization;
 }
 
-const Settings: React.FC<SettingsProps> = ({ organization }) => {
+const Settings = ({ organization }: SettingsProps) => {
   return (
     <div className="animate-in slide-in-from-bottom-4 fade-in duration-500 max-w-2xl">
       <div className="mb-8">
